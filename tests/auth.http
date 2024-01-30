@@ -1,0 +1,54 @@
+GET http://localhost:3000
+
+###
+
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{
+  "username": "admin"
+}
+
+###
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{
+  "username": "asudhaifsdfkalhfdsajkhfsdjahklf",
+  "password": "asudhaifsdfkalhfdsajkhfsdjahklf"
+}
+
+###
+
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "asudhaifsdfkalhfdsajkhfsdjahklf"
+}
+
+###
+
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin"
+}
+
+###
+
+GET http://localhost:3000/api/info
+Authorization: Bearer KZr1gdyMLVdiH9Tu78M3XYAZWjYWLKk7
+
+{
+  "username": "admin",
+  "password": "admin"
+}
+
+###
+
+DELETE http://localhost:3000/api/logout
+Authorization: Bearer 05wu4UIAVeH6oh1MLQ6DtWbqHxpdo1VH
