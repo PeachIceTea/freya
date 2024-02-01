@@ -31,8 +31,8 @@ tower-http = { version = "0.5.1", features = ["trace"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 migrate = { path = "./migrate" }
+tower-cookies = "0.10.0"
 
 [build-dependencies]
 migrate = { path = "./migrate" }
 tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
-tower-cookies = "0.10.0"
