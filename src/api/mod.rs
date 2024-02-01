@@ -1,5 +1,6 @@
-pub mod authentication;
-pub mod books;
+mod authentication;
+mod books;
+mod fs;
 
 use axum::{http::StatusCode, middleware, response::IntoResponse, Router};
 use tower_cookies::CookieManagerLayer;
@@ -14,7 +15,8 @@ use crate::{
 pub async fn build_router(state: FreyaState) -> Router {
     let api = Router::new()
         .merge(authentication::build_router())
-        .nest("/book", books::router());
+        .nest("/book", books::router())
+        .nest("/fs", fs::router());
 
     Router::new()
         .nest("/api", api)

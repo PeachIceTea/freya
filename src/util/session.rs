@@ -9,10 +9,7 @@ use axum::{
 use serde::Serialize;
 use serde_json::json;
 use time::OffsetDateTime;
-use tower_cookies::{
-    cookie::{CookieBuilder, SameSite},
-    Cookie, Cookies,
-};
+use tower_cookies::{cookie::SameSite, Cookie, Cookies};
 
 use crate::state::FreyaState;
 
