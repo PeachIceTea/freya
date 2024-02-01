@@ -4,6 +4,7 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
+use tower_cookies::{Cookie, Cookies};
 
 use crate::{
     axum_json,
@@ -11,7 +12,7 @@ use crate::{
     state::FreyaState,
     util::{
         password::verify_password,
-        session::{create_session_id, Session},
+        session::{create_session_cookie, create_session_id, Session, SESSION_COOKIE_NAME},
     },
 };
 
@@ -29,6 +30,7 @@ pub struct LoginRequest {
 }
 
 pub async fn login(
+    cookies: Cookies,
     State(state): State<FreyaState>,
     Json(data): Json<LoginRequest>,
 ) -> impl IntoResponse {
@@ -90,15 +92,23 @@ pub async fn login(
         });
     }
 
+    // Set the session cookie.
+    cookies.add(create_session_cookie(
+        &session_id,
+        time::OffsetDateTime::now_utc(),
+    ));
+
     axum_json!({
-        "session_id": session_id,
+        "msg": "server-authentication--logged-in"
     })
 }
 
 pub async fn logout(
+    cookies: Cookies,
     State(state): State<FreyaState>,
     Session(session): Session,
 ) -> impl IntoResponse {
+    // Remove the session from the database.
     if let Err(err) = sqlx::query!(
         r#"
             DELETE FROM sessions
@@ -115,8 +125,10 @@ pub async fn logout(
         });
     }
 
+    // Delete the session cookie.
+    cookies.remove(Cookie::new(SESSION_COOKIE_NAME, ""));
+
     axum_json!({
-        "success": true,
         "msg": "server-authentication--logged-out"
     })
 }

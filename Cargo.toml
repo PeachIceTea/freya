@@ -35,3 +35,4 @@ migrate = { path = "./migrate" }
 [build-dependencies]
 migrate = { path = "./migrate" }
 tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
+tower-cookies = "0.10.0"

@@ -1,2 +1,2 @@
 GET http://localhost:3000/api/book
-Authorization: Bearer KZr1gdyMLVdiH9Tu78M3XYAZWjYWLKk7
+Cookie: freya_session=bDoWMdRvFeM4Xs9e1a5dhWkFzx4X8nFY; HttpOnly; SameSite=Strict; Path=/; Expires=Tue, 02 Jan 2024 15:32:07 GMT

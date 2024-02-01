@@ -1,7 +1,8 @@
 pub mod authentication;
 pub mod books;
 
-use axum::{http::StatusCode, middleware::from_fn_with_state, response::IntoResponse, Router};
+use axum::{http::StatusCode, middleware, response::IntoResponse, Router};
+use tower_cookies::CookieManagerLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::{
@@ -18,7 +19,8 @@ pub async fn build_router(state: FreyaState) -> Router {
     Router::new()
         .nest("/api", api)
         .fallback(route_not_found)
-        .layer(from_fn_with_state(state.clone(), get_session))
+        .route_layer(middleware::from_fn_with_state(state.clone(), get_session))
+        .route_layer(CookieManagerLayer::new())
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }
