@@ -25,8 +25,8 @@ pub fn build_router() -> Router<FreyaState> {
 
 #[derive(serde::Deserialize)]
 pub struct LoginRequest {
-    pub username: String,
-    pub password: String,
+    username: String,
+    password: String,
 }
 
 pub async fn login(

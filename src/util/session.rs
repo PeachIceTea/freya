@@ -43,11 +43,11 @@ pub static SESSION_LIFETIME: once_cell::sync::Lazy<time::Duration> =
 pub struct SessionInfo {
     #[serde(skip)]
     pub session_id: String,
-    pub user_id: i64,
+    user_id: i64,
     #[serde(with = "time::serde::iso8601")]
-    pub last_accessed: time::OffsetDateTime,
-    pub username: String,
-    pub admin: bool,
+    last_accessed: time::OffsetDateTime,
+    username: String,
+    admin: bool,
 }
 
 // Middleware function to insert SessionInfo into the request extensions.ü+üß
@@ -173,6 +173,32 @@ impl FromRequestParts<FreyaState> for Session {
                     .into_response_with_status(StatusCode::UNAUTHORIZED),
             ),
         }
+    }
+}
+
+// Extract the session from the request if user is an admin.
+pub struct AdminSession(pub SessionInfo);
+
+#[async_trait]
+impl FromRequestParts<FreyaState> for AdminSession {
+    type Rejection = Response;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        _state: &FreyaState,
+    ) -> Result<Self, Self::Rejection> {
+        // Get session from Session extractor.
+        let session = Session::from_request_parts(parts, _state).await?.0;
+
+        // Check if user is an admin.
+        if !session.admin {
+            return Err(
+                (Json(json!({"error_code": "server-authentication--not-admin"})))
+                    .into_response_with_status(StatusCode::UNAUTHORIZED),
+            );
+        }
+
+        Ok(AdminSession(session))
     }
 }
 

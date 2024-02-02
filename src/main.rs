@@ -22,6 +22,15 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // Check if ffmpeg and ffprobe are installed.
+    util::ffmpeg::is_ffmpeg_installed().expect("Should be able to access ffmpeg and ffprobe");
+
+    // Create data directory.
+    util::storage::create_data_directory().expect("Should be able to create data directory");
+
+    // Initialize tmp cleaning task.
+    util::storage::spawn_tmp_cleaning_task();
+
     // Build application.
     let state = state::FreyaState::new().await;
     let app = api::build_router(state).await;
@@ -36,6 +45,6 @@ async fn main() {
     tracing::info!("Starting server at http://localhost:{}", port);
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
         .await
-        .unwrap();
+        .expect("Should be able to bind to port");
     axum::serve(listener, app).await.unwrap();
 }

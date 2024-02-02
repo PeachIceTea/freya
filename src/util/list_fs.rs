@@ -5,10 +5,10 @@ use serde::Serialize;
 use tokio::io;
 
 // Audio file extensions (.mp3, .flac, .wav, .ogg, .m4a, .m4b, .opus)
-const AUDIO_EXTENSIONS: [&str; 7] = ["mp3", "flac", "wav", "ogg", "m4a", "m4b", "opus"];
+pub const AUDIO_EXTENSIONS: [&str; 7] = ["mp3", "flac", "wav", "ogg", "m4a", "m4b", "opus"];
 
 // image file extensions (.jpg, .jpeg, .png, .gif, .webp, .tiff, .tif)
-const IMAGE_EXTENSIONS: [&str; 7] = ["jpg", "jpeg", "png", "gif", "webp", "tiff", "tif"];
+pub const IMAGE_EXTENSIONS: [&str; 7] = ["jpg", "jpeg", "png", "gif", "webp", "tiff", "tif"];
 
 // Categories of files we care about.
 #[derive(PartialEq, Serialize)]
@@ -33,9 +33,9 @@ impl Display for FileCategory {
 // Filesystem entry.
 #[derive(Serialize)]
 pub struct Entry {
-    pub name: String,
-    pub path: String,
-    pub category: FileCategory,
+    name: String,
+    path: String,
+    category: FileCategory,
 }
 
 pub async fn get_file_system_list(path: &str) -> Result<Vec<Entry>, io::Error> {

@@ -21,7 +21,7 @@ pub fn router() -> Router<FreyaState> {
 // Query for the file system list.
 #[derive(Deserialize)]
 pub struct FsQuery {
-    pub path: Option<String>,
+    path: Option<String>,
 }
 
 // List a directory in the file system.
