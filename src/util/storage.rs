@@ -10,8 +10,6 @@ pub static DATA_PATH: Lazy<PathBuf> = Lazy::new(|| {
     std::env::var("DATA_PATH")
         .map(PathBuf::from)
         .unwrap_or_else(|_| PathBuf::from("data"))
-        .canonicalize()
-        .expect("DATA_PATH should be a valid path")
 });
 
 // Static paths for subdirectories.
@@ -35,9 +33,9 @@ pub fn create_data_directory() -> Result<()> {
     std::fs::create_dir_all(&*DATA_PATH)?;
 
     // Create subdirectories.
-    let subdirectories = ["audio", "covers", "tmp"];
-    for subdirectory in &subdirectories {
-        std::fs::create_dir_all(DATA_PATH.join(subdirectory))?;
+    let subdirectories = [&*AUDIO_PATH, &*COVERS_PATH, &*TMP_PATH];
+    for path in &subdirectories {
+        std::fs::create_dir_all(path)?;
     }
 
     Ok(())

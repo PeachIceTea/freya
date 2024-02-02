@@ -4,7 +4,7 @@ use serde::Deserialize;
 use crate::{
     axum_json,
     state::FreyaState,
-    util::{list_fs::get_file_system_list, session::Session},
+    util::{ffmpeg::ffprobe_book_details, list_fs::get_file_system_list, session::Session},
 };
 
 // Default directory to list.
@@ -15,7 +15,9 @@ pub static DEFAULT_DIRECTORY: once_cell::sync::Lazy<String> = once_cell::sync::L
 });
 
 pub fn router() -> Router<FreyaState> {
-    Router::new().route("/", get(fs))
+    Router::new()
+        .route("/", get(fs))
+        .route("/ffprobe", get(ffprobe))
 }
 
 // Query for the file system list.
@@ -41,5 +43,35 @@ pub async fn fs(Session(_): Session, Query(FsQuery { path }): Query<FsQuery>) ->
     axum_json!({
         "path": path,
         "directory": list,
+    })
+}
+
+// Get ffprobe info for a file.
+pub async fn ffprobe(
+    Session(_): Session,
+    Query(FsQuery { path }): Query<FsQuery>,
+) -> impl IntoResponse {
+    let path = match path {
+        Some(path) => path,
+        None => {
+            return axum_json!({
+                "error_code": "fs--ffprobe--path-missing",
+            });
+        }
+    };
+
+    let info = match ffprobe_book_details(&path).await {
+        Ok(info) => info,
+        Err(e) => {
+            tracing::error!("Failed to get ffprobe info: {}", e);
+            return axum_json!({
+                "error_code": "fs--ffprobe--failed",
+            });
+        }
+    };
+
+    axum_json!({
+        "path": path,
+        "info": info,
     })
 }

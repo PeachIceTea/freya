@@ -34,12 +34,12 @@ tower = "0.4.13"
 tower-http = { version = "0.5.1", features = ["trace"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
-migrate = { path = "./migrate" }
+freya-migrate = { path = "./migrate" }
 tower-cookies = "0.10.0"
 axum_typed_multipart = "0.11.0"
 anyhow = "1.0.79"
 reqwest = "0.11.24"
 
 [build-dependencies]
-migrate = { path = "./migrate" }
+freya-migrate = { path = "./migrate" }
 tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }

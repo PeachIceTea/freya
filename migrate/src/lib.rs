@@ -18,6 +18,8 @@ pub async fn open_database(path: &str) -> sqlx::Pool<Sqlite> {
 struct Migrations;
 
 pub async fn migrate(database: &sqlx::Pool<Sqlite>) {
+    tracing::info!("Migrating database");
+
     // Check if migrations table exists.
     if sqlx::query("SELECT name FROM sqlite_master WHERE type='table' AND name='migrations'")
         .fetch_one(database)
@@ -54,7 +56,10 @@ pub async fn migrate(database: &sqlx::Pool<Sqlite>) {
 
     // Apply migrations that have not been applied.
     for migration in migrations {
+        tracing::info!("Checking migration: {}", &migration);
         if !applied_migrations.contains(&migration) {
+            tracing::info!("Applying migration: {}", &migration);
+
             // Read the migration file.
             let migration_file = Migrations::get(&migration)
                 .expect("Should get migration file")

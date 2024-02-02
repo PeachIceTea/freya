@@ -13,11 +13,11 @@ impl FreyaState {
             std::env::var("DATABASE_PATH").unwrap_or_else(|_| "freya.db".to_string());
 
         // Create the database pool.
-        let database_pool = migrate::open_database(&database_path).await;
+        let database_pool = freya_migrate::open_database(&database_path).await;
 
         // Migrate the database if NO_MIGRATE is not set.
         if std::env::var("NO_MIGRATE").is_err() {
-            migrate::migrate(&database_pool).await;
+            freya_migrate::migrate(&database_pool).await;
         };
         Self { db: database_pool }
     }

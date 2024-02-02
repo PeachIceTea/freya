@@ -1,2 +1,7 @@
-GET http://localhost:3000/api/fs?path=/Users/jonas/Nextcloud
-Cookie: freya_session=5wy9yBlNj2XtGsDAj8E6SsjcPd8SoO8w; HttpOnly; SameSite=Strict; Path=/; Expires=Tue, 02 Jan 2024 15:32:07 GMT
+GET http://localhost:3000/api/fs?path=/home/jonas/Nextcloud
+Cookie: freya_session=cmNCJ4KG1IyqCiAufR7JSSVKJ9C69Ftx; HttpOnly; SameSite=Strict; Path=/; Expires=Tue, 02 Jan 2024 15:32:07 GMT
+
+###
+
+GET http://localhost:3000/api/fs/ffprobe?path=/home/jonas/Music/Persona 3 Reload Limited Box Original Soundtrack [MP3]/Disc 1/1.01 Full Moon Full Life.mp3
+Cookie: freya_session=cmNCJ4KG1IyqCiAufR7JSSVKJ9C69Ftx; HttpOnly; SameSite=Strict; Path=/; Expires=Tue, 02 Jan 2024 15:32:07 GMT

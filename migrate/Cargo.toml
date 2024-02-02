@@ -1,5 +1,5 @@
 [package]
-name = "migrate"
+name = "freya-migrate"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 rust-embed = "8.2.0"
 sqlx = { version = "0.7.3", features = ["sqlite"] }
+tracing = "0.1.40"

@@ -550,7 +550,7 @@ dependencies = [
  "axum",
  "axum_typed_multipart",
  "dotenvy",
- "migrate",
+ "freya-migrate",
  "once_cell",
  "rand",
  "regex",
@@ -566,6 +566,15 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "freya-migrate"
+version = "0.1.0"
+dependencies = [
+ "rust-embed",
+ "sqlx",
+ "tracing",
 ]
 
 [[package]]
@@ -1066,14 +1075,6 @@ name = "memchr"
 version = "2.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "523dc4f511e55ab87b694dc30d0f820d60906ef06413f93d4d7a1385599cc149"
-
-[[package]]
-name = "migrate"
-version = "0.1.0"
-dependencies = [
- "rust-embed",
- "sqlx",
-]
 
 [[package]]
 name = "mime"
