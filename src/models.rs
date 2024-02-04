@@ -35,7 +35,6 @@ pub struct Book {
 
     pub title: String,
     pub author: String,
-    pub cover: Option<Vec<u8>>,
 
     #[serde(with = "time::serde::iso8601")]
     pub created: OffsetDateTime,

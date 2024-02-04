@@ -1,19 +1,17 @@
 use axum::{
     async_trait,
     extract::{FromRequestParts, Request, State},
-    http::{request::Parts, StatusCode},
+    http::request::Parts,
     middleware::Next,
     response::Response,
-    Json,
 };
 use serde::Serialize;
-use serde_json::json;
 use time::OffsetDateTime;
 use tower_cookies::{cookie::SameSite, Cookie, Cookies};
 
-use crate::state::FreyaState;
+use crate::{api_bail, state::FreyaState};
 
-use super::{random::random_string, response::IntoResponseWithStatus};
+use super::{random::random_string, response::ApiError};
 
 // Bytes of entropy in the session id.
 pub static SESSION_ID_ENTROPY: usize = 32;
@@ -159,20 +157,17 @@ pub struct Session(pub SessionInfo);
 
 #[async_trait]
 impl FromRequestParts<FreyaState> for Session {
-    type Rejection = Response;
+    type Rejection = ApiError;
 
     async fn from_request_parts(
         parts: &mut Parts,
         _state: &FreyaState,
     ) -> Result<Self, Self::Rejection> {
         // Get the session from the request extensions.
-        match parts.extensions.get::<SessionInfo>() {
-            Some(session) => Ok(Session(session.to_owned())),
-            None => Err(
-                (Json(json!({"error_code": "sever-authentication--not-logged-in"})))
-                    .into_response_with_status(StatusCode::UNAUTHORIZED),
-            ),
-        }
+        parts.extensions.get::<SessionInfo>().map_or_else(
+            || api_bail!(NotLoggedIn),
+            |session| Ok(Session(session.to_owned())),
+        )
     }
 }
 
@@ -181,7 +176,7 @@ pub struct AdminSession(pub SessionInfo);
 
 #[async_trait]
 impl FromRequestParts<FreyaState> for AdminSession {
-    type Rejection = Response;
+    type Rejection = ApiError;
 
     async fn from_request_parts(
         parts: &mut Parts,
@@ -192,10 +187,7 @@ impl FromRequestParts<FreyaState> for AdminSession {
 
         // Check if user is an admin.
         if !session.admin {
-            return Err(
-                (Json(json!({"error_code": "server-authentication--not-admin"})))
-                    .into_response_with_status(StatusCode::UNAUTHORIZED),
-            );
+            api_bail!(NotAdmin)
         }
 
         Ok(AdminSession(session))
@@ -212,7 +204,8 @@ pub fn create_session_cookie<'a>(session_id: &str, last_accessed: OffsetDateTime
     Cookie::build((SESSION_COOKIE_NAME, session_id.to_string()))
         .path("/")
         .http_only(true)
+        .domain("localhost")
         .same_site(SameSite::Strict)
-        .expires(last_accessed - *SESSION_LIFETIME)
+        .expires(last_accessed + *SESSION_LIFETIME)
         .build()
 }

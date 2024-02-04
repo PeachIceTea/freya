@@ -1,8 +1,11 @@
 mod api;
 mod models;
+#[cfg(profile = "release")]
+mod serve;
 mod state;
 mod util;
 
+use axum::Router;
 use tracing_subscriber::prelude::*;
 
 #[tokio::main]
@@ -32,8 +35,15 @@ async fn main() {
     util::storage::spawn_tmp_cleaning_task();
 
     // Build application.
-    let state = state::FreyaState::new().await;
-    let app = api::build_router(state).await;
+    let state: state::FreyaState = state::FreyaState::new().await;
+
+    #[cfg(profile = "release")]
+    let app = Router::new()
+        .nest("/api", api::build_router(state).await)
+        .fallback(serve::serve_frontend);
+
+    #[cfg(profile = "debug")]
+    let app = Router::new().nest("/api", api::build_router(state).await);
 
     // Get the port from the environment.
     // Default to 3000 if PORT is not set.

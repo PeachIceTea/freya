@@ -1,10 +1,16 @@
-use axum::{extract::Query, response::IntoResponse, routing::get, Router};
-use serde::Deserialize;
+use anyhow::Context;
+use axum::{extract::Query, routing::get, Router};
+use serde::{Deserialize, Serialize};
 
 use crate::{
-    axum_json,
+    data_response,
     state::FreyaState,
-    util::{ffmpeg::ffprobe_book_details, list_fs::get_file_system_list, session::Session},
+    util::{
+        ffmpeg::{ffprobe_book_details, FileInfo},
+        list_fs::{get_file_system_list, Entry},
+        response::{ApiError, ApiResult, DataResponse},
+        session::Session,
+    },
 };
 
 // Default directory to list.
@@ -26,52 +32,45 @@ pub struct FsQuery {
     path: Option<String>,
 }
 
+#[derive(Serialize)]
+pub struct FsResponse {
+    path: String,
+    directory: Vec<Entry>,
+}
+
 // List a directory in the file system.
-pub async fn fs(Session(_): Session, Query(FsQuery { path }): Query<FsQuery>) -> impl IntoResponse {
+pub async fn fs(
+    Session(_): Session,
+    Query(FsQuery { path }): Query<FsQuery>,
+) -> ApiResult<DataResponse<FsResponse>> {
     let path = path.unwrap_or(DEFAULT_DIRECTORY.to_string());
 
-    let list = match get_file_system_list(&path).await {
-        Ok(list) => list,
-        Err(e) => {
-            tracing::error!("Failed to get file system list: {}", e);
-            return axum_json!({
-                "error_code": "fs--list-failed",
-            });
-        }
-    };
+    let list = get_file_system_list(&path)
+        .await
+        .context(ApiError::CouldNotListDirectory)?;
 
-    axum_json!({
-        "path": path,
-        "directory": list,
+    data_response!(FsResponse {
+        path,
+        directory: list,
     })
+}
+
+#[derive(Serialize)]
+pub struct FfprobeResponse {
+    path: String,
+    info: FileInfo,
 }
 
 // Get ffprobe info for a file.
 pub async fn ffprobe(
     Session(_): Session,
     Query(FsQuery { path }): Query<FsQuery>,
-) -> impl IntoResponse {
-    let path = match path {
-        Some(path) => path,
-        None => {
-            return axum_json!({
-                "error_code": "fs--ffprobe--path-missing",
-            });
-        }
-    };
+) -> ApiResult<DataResponse<FfprobeResponse>> {
+    let path = path.context(ApiError::InvalidPath)?;
 
-    let info = match ffprobe_book_details(&path).await {
-        Ok(info) => info,
-        Err(e) => {
-            tracing::error!("Failed to get ffprobe info: {}", e);
-            return axum_json!({
-                "error_code": "fs--ffprobe--failed",
-            });
-        }
-    };
+    let info = ffprobe_book_details(&path)
+        .await
+        .with_context(|| ApiError::FFProbeFailed(path.to_string()))?;
 
-    axum_json!({
-        "path": path,
-        "info": info,
-    })
+    data_response!(FfprobeResponse { path, info })
 }

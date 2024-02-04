@@ -1,41 +1,46 @@
-use axum::{body::Bytes, extract::State, response::IntoResponse, routing::get, Router};
+use anyhow::Context;
+use axum::{body::Bytes, extract::State, routing::get, Router};
 use axum_typed_multipart::{FieldData, TryFromMultipart, TypedMultipart};
+use serde::Serialize;
 
 use crate::{
-    axum_json,
+    api_bail, data_response,
     models::Book,
     state::FreyaState,
-    util::{cover::get_cover_bytes, ffmpeg::ffprobe_duration, session::AdminSession},
+    util::{
+        cover::get_cover_bytes,
+        ffmpeg::ffprobe_duration,
+        response::{ApiError, ApiResult, DataResponse},
+        session::{AdminSession, Session},
+    },
 };
 
 pub fn router() -> Router<FreyaState> {
     Router::new().route("/", get(get_books).post(upload_book))
 }
 
-pub async fn get_books(State(state): State<FreyaState>) -> impl IntoResponse {
+#[derive(Serialize)]
+pub struct GetBooksResponse {
+    books: Vec<Book>,
+}
+
+pub async fn get_books(
+    State(state): State<FreyaState>,
+    Session(_): Session,
+) -> ApiResult<DataResponse<GetBooksResponse>> {
     // Get all books from the database.
-    let books = match sqlx::query_as!(
+    let books = sqlx::query_as!(
         Book,
         r#"
-            SELECT *
+            SELECT id, title, author, created, modified
             FROM books
         "#
     )
     .fetch_all(&state.db)
     .await
-    {
-        Ok(books) => books,
-        Err(e) => {
-            tracing::error!("Failed to get books: {}", e);
-            return axum_json!({
-                "error_code": "server-database--query-failed",
-            });
-        }
-    };
+    .context("Couldn't get books from database")?;
 
-    axum_json!({
-        "books": books,
-    })
+    data_response!(GetBooksResponse { books })
 }
 
 #[derive(TryFromMultipart)]
@@ -52,6 +57,11 @@ struct FileData {
     duration: f64,
 }
 
+#[derive(Serialize)]
+pub struct UploadBookResponse {
+    book_id: i64,
+}
+
 pub async fn upload_book(
     State(state): State<FreyaState>,
     AdminSession(_): AdminSession,
@@ -61,39 +71,30 @@ pub async fn upload_book(
         cover,
         files,
     }): TypedMultipart<UploadBook>,
-) -> impl IntoResponse {
+) -> ApiResult<DataResponse<UploadBookResponse>> {
     // Trim user inputs.
     let title = title.trim();
     let author = author.trim();
 
     // Check if title, author, and files vector are not empty.
     if title.is_empty() || author.is_empty() || files.is_empty() {
-        return axum_json!({
-            "error_code": "server-books--missing-data",
-        });
+        api_bail!(UploadMissingData)
     }
 
     // Check if each file path exists.
     for file in &files {
         if !std::path::Path::new(file).exists() {
-            return axum_json!({
-                "error_code": "server-books--invalid-file-path",
-                "value": file,
-            });
+            api_bail!(UploadInvalidFilePath, file.to_string())
         }
     }
 
     // Extract cover image.
     let cover = if let Some(cover) = cover {
-        match get_cover_bytes(cover).await {
-            Ok(cover) => Some(cover),
-            Err(e) => {
-                tracing::error!("Failed to get cover image: {}", e);
-                return axum_json!({
-                    "error_code": "server-books--failed-to-get-cover-image",
-                });
-            }
-        }
+        Some(
+            get_cover_bytes(cover)
+                .await
+                .context(ApiError::FailedToGetCoverImage)?,
+        )
     } else {
         None
     };
@@ -102,16 +103,9 @@ pub async fn upload_book(
     let mut file_data = Vec::with_capacity(files.len());
     for path in files {
         // Use ffprobe to get duration of file.
-        let duration = match ffprobe_duration(&path).await {
-            Ok(duration) => duration,
-            Err(e) => {
-                tracing::error!("Failed to get file info: {}", e);
-                return axum_json!({
-                    "error_code": "server-books--failed-to-get-file-info",
-                    "value": path,
-                });
-            }
-        };
+        let duration = ffprobe_duration(&path)
+            .await
+            .with_context(|| ApiError::FFProbeFailed(path.to_string()))?;
 
         // Get file name from file path.
         let name = std::path::Path::new(&path)
@@ -131,18 +125,14 @@ pub async fn upload_book(
     file_data.sort_by(|a, b| a.name.cmp(&b.name));
 
     // Insert book into the database.
-    let mut trx = match state.db.begin().await {
-        Ok(trx) => trx,
-        Err(e) => {
-            tracing::error!("Failed to start transaction: {}", e);
-            return axum_json!({
-                "error_code": "server-database--transaction-failed",
-            });
-        }
-    };
+    let mut trx = state
+        .db
+        .begin()
+        .await
+        .context("Failed to start transaction")?;
 
     // Insert book into the database.
-    let book_id = match sqlx::query!(
+    let book_id = sqlx::query!(
         r#"
             INSERT INTO books (title, author, cover)
             VALUES (?, ?, ?)
@@ -154,20 +144,13 @@ pub async fn upload_book(
     )
     .fetch_one(&mut *trx)
     .await
-    {
-        Ok(book) => book.id,
-        Err(e) => {
-            tracing::error!("Failed to insert book: {}", e);
-            return axum_json!({
-                "error_code": "server-database--query-failed",
-            });
-        }
-    };
+    .context("Failed to insert book into database")?
+    .id;
 
     // Insert files into the database.
     for (position, file) in file_data.iter().enumerate() {
         let position = position as i32 + 1;
-        if let Err(e) = sqlx::query!(
+        sqlx::query!(
             r#"
                 INSERT INTO files (book_id, path, name, position, duration)
                 VALUES (?, ?, ?, ?, ?)
@@ -180,23 +163,11 @@ pub async fn upload_book(
         )
         .execute(&mut *trx)
         .await
-        {
-            tracing::error!("Failed to insert file: {}", e);
-            return axum_json!({
-                "error_code": "server-database--query-failed",
-            });
-        }
+        .context("Failed to insert file into database")?;
     }
 
     // Commit transaction.
-    if let Err(e) = trx.commit().await {
-        tracing::error!("Failed to commit transaction: {}", e);
-        return axum_json!({
-            "error_code": "server-database--transaction-failed",
-        });
-    }
+    trx.commit().await.context("Failed to commit transaction")?;
 
-    axum_json!({
-        "book_id": book_id,
-    })
+    data_response!(UploadBookResponse { book_id })
 }
