@@ -54,6 +54,60 @@ export const useBooks = () => {
 	return { books, error, isLoading }
 }
 
+// Get a single book by ID.
+export const FileSchema = z.object({
+	id: z.number().int(),
+	book_id: z.number().int(),
+	path: z.string(),
+	name: z.string(),
+	position: z.number().int(),
+	duration: z.number(),
+	created: z.string(), // ISO8601 date string
+	modified: z.string(), // ISO8601 date string
+})
+export const FilesSchema = z.array(FileSchema)
+
+export const BookDetailsSchema = BookSchema.and(
+	z.object({
+		files: FilesSchema,
+	}),
+).and(
+	z.object({
+		duration: z.number(),
+	}),
+)
+export const BookDetailsResponseSchema = DataResponseSchema(BookDetailsSchema)
+
+export const getBook = async (id: number) => {
+	const res = await get(`/book/${id}`)
+	return BookDetailsResponseSchema.parse(res)
+}
+
+export const useBook = (id: number) => {
+	const {
+		data,
+		error: parseError,
+		isLoading,
+	} = useSWR(`/book/${id}`, () => getBook(id))
+
+	let error
+	if (parseError) {
+		console.error(parseError)
+		error = ServerConnectionError
+	} else if (!data && !isLoading) {
+		error = ServerConnectionError
+	}
+
+	let book
+	if (data?.success) {
+		book = data.data
+	} else {
+		error = data
+	}
+
+	return { book, error, isLoading }
+}
+
 // Generate URL for book cover image.
 export const bookCoverURL = (id: number) => `/api/book/${id}/cover`
 

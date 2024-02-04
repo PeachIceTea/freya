@@ -10,7 +10,7 @@ use serde::Serialize;
 
 use crate::{
     api_bail, data_response,
-    models::Book,
+    models::{Book, File},
     state::FreyaState,
     util::{
         cover::get_cover_bytes,
@@ -23,6 +23,7 @@ use crate::{
 pub fn router() -> Router<FreyaState> {
     Router::new()
         .route("/", get(get_books).post(upload_book))
+        .route("/:book_id", get(get_book))
         .route("/:book_id/cover", get(get_book_cover))
 }
 
@@ -34,7 +35,13 @@ pub async fn get_books(
     let books = sqlx::query_as!(
         Book,
         r#"
-            SELECT id, title, author, created, modified
+            SELECT
+                id,
+                title,
+                author,
+                created,
+                modified,
+                NULL AS "duration: _"
             FROM books
             ORDER BY title ASC
         "#
@@ -44,6 +51,61 @@ pub async fn get_books(
     .context("Couldn't get books from database")?;
 
     data_response!(books)
+}
+
+#[derive(Serialize)]
+pub struct BookResponse {
+    #[serde(flatten)]
+    book: Book,
+    files: Vec<File>,
+}
+
+pub async fn get_book(
+    Session(_): Session,
+    Path(book_id): Path<i64>,
+    State(state): State<FreyaState>,
+) -> ApiResult<DataResponse<BookResponse>> {
+    // Get book from the database.
+    let book = sqlx::query_as!(
+        Book,
+        r#"
+            SELECT
+                id,
+                title,
+                author,
+                created,
+                modified,
+                (
+                    SELECT SUM(duration)
+                    FROM files
+                    WHERE book_id = books.id
+                ) AS "duration: f64"
+            FROM books
+            WHERE id = ?
+        "#, // TODO: Figure out why SQLX thinks the subquery is NULL.
+        book_id
+    )
+    .fetch_optional(&state.db)
+    .await
+    .context("Couldn't get book from database")?
+    .ok_or(ApiError::NotFound)?;
+
+    // Get files from the database.
+    let files = sqlx::query_as!(
+        File,
+        r#"
+            SELECT *
+            FROM files
+            WHERE book_id = ?
+            ORDER BY position ASC
+        "#,
+        book_id
+    )
+    .fetch_all(&state.db)
+    .await
+    .context("Couldn't get files from database")?;
+
+    data_response!(BookResponse { book, files })
 }
 
 pub async fn get_book_cover(
@@ -178,7 +240,7 @@ pub async fn upload_book(
 
     // Insert files into the database.
     for (position, file) in file_data.iter().enumerate() {
-        let position = position as i32 + 1;
+        let position = position as i64 + 1;
         sqlx::query!(
             r#"
                 INSERT INTO files (book_id, path, name, position, duration)

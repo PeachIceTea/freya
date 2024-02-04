@@ -42,9 +42,7 @@ export const useDirectoryEntries = (path: string) => {
 		data,
 		error: parseError,
 		isLoading,
-	} = useSWR([`/fs?path=${path}`, path], ([_url, path]) =>
-		getDirectoryEntries(path),
-	)
+	} = useSWR(`/fs?path=${path}`, () => getDirectoryEntries(path))
 
 	let error
 	if (parseError) {

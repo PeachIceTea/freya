@@ -35,6 +35,8 @@ pub struct Book {
 
     pub title: String,
     pub author: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub duration: Option<f64>,
 
     #[serde(with = "time::serde::iso8601")]
     pub created: OffsetDateTime,
@@ -50,7 +52,7 @@ pub struct File {
     pub path: String,
 
     pub name: String,
-    pub position: i32,
+    pub position: i64,
     pub duration: f64,
 
     #[serde(with = "time::serde::iso8601")]

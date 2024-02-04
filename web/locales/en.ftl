@@ -32,6 +32,11 @@ server-books--failed-to-get-cover-image = The server failed to get the cover ima
 books--title = Books
 books--add-book-button = Add book
 
+# Book details
+book-details--title = {$title} by {$author}
+book-details--title-placeholder = Book details
+
+# New book
 new-book--title = Add a book to Freya
 new-book--files-label = Audio files
 new-book--select-file-button = {$multiSelect ->

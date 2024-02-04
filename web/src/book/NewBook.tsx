@@ -25,6 +25,7 @@ export default function NewBook() {
 	const [_location, setLocation] = useLocation()
 
 	const [error, setError] = useState<Error | null>(null)
+	const [loading, setLoading] = useState(false)
 
 	// Info received from ffprobe.
 	const [fileInfo, setFileInfo] = useState<FileInfo | null>()
@@ -67,6 +68,10 @@ export default function NewBook() {
 
 	async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault()
+		if (loading) {
+			return
+		}
+		setLoading(true)
 
 		// Get data from form.
 		const form = event.currentTarget
@@ -99,6 +104,7 @@ export default function NewBook() {
 
 		// Send form data to server.
 		const res = await uploadBook(formData)
+		setLoading(false)
 
 		if (!res.success) {
 			return setError(res)
@@ -286,7 +292,7 @@ export default function NewBook() {
 					</Tabs>
 				</div>
 
-				<Button type="submit" variant="primary">
+				<Button type="submit" variant="primary" disabled={loading}>
 					{t("new-book--submit-button")}
 				</Button>
 			</Form>

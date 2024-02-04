@@ -13,6 +13,9 @@ pub type ApiFileResult<T> = Result<T, ApiError>;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
+    #[error("server--not-found")]
+    NotFound,
+
     // Authentication errors.
     #[error("server-authentication--already-logged-in")]
     AlreadyLoggedIn,
@@ -83,7 +86,7 @@ impl IntoResponse for ApiError {
             Self::CouldNotListDirectory | Self::FailedToGetCoverImage | Self::FFProbeFailed(_) => {
                 StatusCode::UNPROCESSABLE_ENTITY
             }
-            Self::FileNotFound => StatusCode::NOT_FOUND,
+            Self::FileNotFound | Self::NotFound => StatusCode::NOT_FOUND,
             Self::NotLoggedIn | Self::NotAdmin => StatusCode::UNAUTHORIZED,
             Self::AnyhowError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
@@ -98,7 +101,8 @@ impl IntoResponse for ApiError {
             | Self::InvalidPath
             | Self::NotLoggedIn
             | Self::NotAdmin
-            | Self::FileNotFound => ErrorResponse::new(api_error.to_string(), None),
+            | Self::FileNotFound
+            | Self::NotFound => ErrorResponse::new(api_error.to_string(), None),
 
             Self::UploadInvalidFilePath(value) | Self::FFProbeFailed(value) => {
                 ErrorResponse::new(api_error.to_string(), Some(value.to_string()))
