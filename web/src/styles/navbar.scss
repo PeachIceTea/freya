@@ -1,0 +1,37 @@
+.navbar {
+	background-color: $primary !important;
+	padding: 0.2rem 1rem;
+
+	ul.navbar-nav {
+		.nav-item {
+			margin-left: 0.5em;
+		}
+	}
+
+	a.nav-link {
+		font-weight: 400;
+		color: $navbar-dark-color;
+	}
+
+	a.nav-link:hover {
+		color: $navbar-dark-hover-color;
+	}
+
+	.navbar-brand {
+		font-weight: 600;
+	}
+}
+
+.navbar-version {
+	font-size: 0.65em;
+	color: $navbar-dark-color;
+}
+
+.nav-link > svg {
+	vertical-align: -0.125em;
+}
+
+.nav-version {
+	font-size: 0.65em;
+	color: $navbar-dark-color;
+}

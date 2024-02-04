@@ -1,0 +1,29 @@
+$primary: #a62c21;
+$success: #28a745;
+$info: #17a2b8;
+$warning: #ffc107;
+$danger: #dc3545;
+
+$enable-grid-classes: false;
+$enable-cssgrid: true;
+
+@import "/node_modules/bootstrap/scss/bootstrap.scss";
+
+/* Size things to allow the virtual scroll container to determine its own size */
+html,
+body {
+	height: 100%;
+	margin: 0;
+}
+
+#root {
+	height: 100%;
+}
+
+#app {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+@import "./navbar.scss";

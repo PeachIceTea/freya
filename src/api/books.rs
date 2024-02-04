@@ -1,5 +1,10 @@
 use anyhow::Context;
-use axum::{body::Bytes, extract::State, routing::get, Router};
+use axum::{
+    body::Bytes,
+    extract::{Path, State},
+    routing::get,
+    Router,
+};
 use axum_typed_multipart::{FieldData, TryFromMultipart, TypedMultipart};
 use serde::Serialize;
 
@@ -10,37 +15,59 @@ use crate::{
     util::{
         cover::get_cover_bytes,
         ffmpeg::ffprobe_duration,
-        response::{ApiError, ApiResult, DataResponse},
+        response::{ApiError, ApiFileResult, ApiResult, DataResponse},
         session::{AdminSession, Session},
     },
 };
 
 pub fn router() -> Router<FreyaState> {
-    Router::new().route("/", get(get_books).post(upload_book))
-}
-
-#[derive(Serialize)]
-pub struct GetBooksResponse {
-    books: Vec<Book>,
+    Router::new()
+        .route("/", get(get_books).post(upload_book))
+        .route("/:book_id/cover", get(get_book_cover))
 }
 
 pub async fn get_books(
     State(state): State<FreyaState>,
     Session(_): Session,
-) -> ApiResult<DataResponse<GetBooksResponse>> {
+) -> ApiResult<DataResponse<Vec<Book>>> {
     // Get all books from the database.
     let books = sqlx::query_as!(
         Book,
         r#"
             SELECT id, title, author, created, modified
             FROM books
+            ORDER BY title ASC
         "#
     )
     .fetch_all(&state.db)
     .await
     .context("Couldn't get books from database")?;
 
-    data_response!(GetBooksResponse { books })
+    data_response!(books)
+}
+
+pub async fn get_book_cover(
+    Session(_): Session,
+    Path(book_id): Path<i64>,
+    State(state): State<FreyaState>,
+) -> ApiFileResult<Vec<u8>> {
+    // Get cover image from the database.
+    let cover = sqlx::query!(
+        r#"
+            SELECT cover
+            FROM books
+            WHERE id = ?
+        "#,
+        book_id
+    )
+    .fetch_optional(&state.db)
+    .await
+    .context("Couldn't get cover image from database")?
+    .map(|row| row.cover)
+    .unwrap_or_default();
+
+    // Return cover image.
+    cover.ok_or(ApiError::FileNotFound)
 }
 
 #[derive(TryFromMultipart)]
@@ -90,11 +117,13 @@ pub async fn upload_book(
 
     // Extract cover image.
     let cover = if let Some(cover) = cover {
-        Some(
-            get_cover_bytes(cover)
-                .await
-                .context(ApiError::FailedToGetCoverImage)?,
-        )
+        let cover_data = get_cover_bytes(cover).await;
+        if let Ok(cover_data) = cover_data {
+            Some(cover_data)
+        } else {
+            tracing::debug!("Failed to get cover image bytes: {:?}", cover_data);
+            api_bail!(FailedToGetCoverImage)
+        }
     } else {
         None
     };

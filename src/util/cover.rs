@@ -68,7 +68,7 @@ async fn download_image(url: &str) -> Result<Vec<u8>> {
         .to_str()
         .context("Failed to convert content type to string")?
         .to_string();
-    if content_type.starts_with("image/") {
+    if !content_type.starts_with("image/") {
         bail!(
             "Response does not contain an image: {}\nContent type: {}",
             url,

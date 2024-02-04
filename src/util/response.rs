@@ -9,6 +9,7 @@ use thiserror::Error;
 extern crate proc_macro;
 
 pub type ApiResult<T> = Result<Json<T>, ApiError>;
+pub type ApiFileResult<T> = Result<T, ApiError>;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
@@ -34,6 +35,9 @@ pub enum ApiError {
 
     #[error("server-fs--invalid-path")]
     InvalidPath,
+
+    #[error("server-fs--not-found")]
+    FileNotFound,
 
     // Book errors.
     #[error("server-upload--missing-data")]
@@ -79,6 +83,7 @@ impl IntoResponse for ApiError {
             Self::CouldNotListDirectory | Self::FailedToGetCoverImage | Self::FFProbeFailed(_) => {
                 StatusCode::UNPROCESSABLE_ENTITY
             }
+            Self::FileNotFound => StatusCode::NOT_FOUND,
             Self::NotLoggedIn | Self::NotAdmin => StatusCode::UNAUTHORIZED,
             Self::AnyhowError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
@@ -92,7 +97,8 @@ impl IntoResponse for ApiError {
             | Self::FailedToGetCoverImage
             | Self::InvalidPath
             | Self::NotLoggedIn
-            | Self::NotAdmin => ErrorResponse::new(api_error.to_string(), None),
+            | Self::NotAdmin
+            | Self::FileNotFound => ErrorResponse::new(api_error.to_string(), None),
 
             Self::UploadInvalidFilePath(value) | Self::FFProbeFailed(value) => {
                 ErrorResponse::new(api_error.to_string(), Some(value.to_string()))

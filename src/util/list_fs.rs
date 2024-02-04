@@ -1,6 +1,3 @@
-use core::fmt;
-use std::fmt::{Display, Formatter};
-
 use serde::Serialize;
 use tokio::io;
 
@@ -12,22 +9,12 @@ pub const IMAGE_EXTENSIONS: [&str; 7] = ["jpg", "jpeg", "png", "gif", "webp", "t
 
 // Categories of files we care about.
 #[derive(PartialEq, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum FileCategory {
     Directory,
     Audio,
     Image,
     File,
-}
-
-impl Display for FileCategory {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            FileCategory::Directory => write!(f, "directory"),
-            FileCategory::Audio => write!(f, "audio"),
-            FileCategory::Image => write!(f, "image"),
-            FileCategory::File => write!(f, "file"),
-        }
-    }
 }
 
 // Filesystem entry.
