@@ -5,7 +5,6 @@ import {
 	DataResponseSchema,
 	ServerConnectionError,
 	get,
-	post,
 	postMultipart,
 } from "./api"
 

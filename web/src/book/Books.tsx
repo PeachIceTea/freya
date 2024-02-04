@@ -1,5 +1,5 @@
 import { Button, Card, Container } from "react-bootstrap"
-import { Link, useLocation } from "wouter"
+import { Link } from "wouter"
 
 import { bookCoverURL, useBooks } from "../api/books"
 import { useTitle } from "../common"
