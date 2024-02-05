@@ -4,8 +4,8 @@ use tokio::io;
 // Audio file extensions (.mp3, .flac, .wav, .ogg, .m4a, .m4b, .opus)
 pub const AUDIO_EXTENSIONS: [&str; 7] = ["mp3", "flac", "wav", "ogg", "m4a", "m4b", "opus"];
 
-// image file extensions (.jpg, .jpeg, .png, .gif, .webp, .tiff, .tif)
-pub const IMAGE_EXTENSIONS: [&str; 7] = ["jpg", "jpeg", "png", "gif", "webp", "tiff", "tif"];
+// image file extensions (.jpg, .jpeg, .png, .webp)
+pub const IMAGE_EXTENSIONS: [&str; 4] = ["jpg", "jpeg", "png", "webp"];
 
 // Categories of files we care about.
 #[derive(PartialEq, Serialize)]

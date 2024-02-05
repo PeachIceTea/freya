@@ -9,9 +9,9 @@ use crate::{
     state::FreyaState,
     util::{
         ffmpeg::{ffprobe_book_details, FileInfo},
-        list_fs::{get_file_system_list, Entry},
+        list_fs::{get_file_system_list, Entry, IMAGE_EXTENSIONS},
         response::{ApiError, ApiFileResult, ApiResult, DataResponse},
-        session::Session,
+        session::{AdminSession, Session},
         storage::TMP_PATH,
     },
 };
@@ -97,16 +97,27 @@ pub struct TemporaryCoverQuery {
     name: String,
 }
 
+// If PathBuf::join() is called with an absolute path, it will ignore the previous path. This allows
+// the use of this function for both extracted files and files selected from the file system. It
+// also theoretically allows the use of this function to download arbitrary files from the server.
+// Not sure that is an actual attack vector, but it is something to keep in mind. To limit the
+// potential damage, this function can only be called by an admin and checks if the file has an
+// image extension.
 pub async fn get_tmp_cover(
-    Session(_): Session,
+    AdminSession(_): AdminSession,
     Query(TemporaryCoverQuery { name }): Query<TemporaryCoverQuery>,
 ) -> ApiFileResult<Vec<u8>> {
     // Read the file.
     let path = TMP_PATH.join(&name);
 
+    tracing::debug!("Reading temporary cover image: {}", path.to_string_lossy());
+
     // Check if the file is an image.
-    let ext = path.extension().context(ApiError::InvalidPath)?;
-    if !matches!(ext.to_str(), Some("jpg") | Some("jpeg") | Some("png")) {
+    let ext = path
+        .extension()
+        .context(ApiError::InvalidPath)?
+        .to_string_lossy();
+    if !IMAGE_EXTENSIONS.contains(&ext.as_ref()) {
         api_bail!(InvalidPath)
     }
 

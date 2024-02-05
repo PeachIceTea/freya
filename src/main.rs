@@ -6,7 +6,10 @@ mod state;
 mod util;
 
 use axum::Router;
+use tokio::signal;
 use tracing_subscriber::prelude::*;
+
+use crate::util::storage::TMP_PATH;
 
 #[tokio::main]
 async fn main() {
@@ -27,12 +30,6 @@ async fn main() {
 
     // Check if ffmpeg and ffprobe are installed.
     util::ffmpeg::is_ffmpeg_installed().expect("Should be able to access ffmpeg and ffprobe");
-
-    // Create data directory.
-    util::storage::create_data_directory().expect("Should be able to create data directory");
-
-    // Initialize tmp cleaning task.
-    util::storage::spawn_tmp_cleaning_task();
 
     // Build application.
     let state: state::FreyaState = state::FreyaState::new().await;
@@ -56,5 +53,42 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
         .await
         .expect("Should be able to bind to port");
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {shutdown()},
+        _ = terminate => {shutdown()},
+    }
+}
+
+fn shutdown() {
+    tracing::info!("Received shutdown signal. Shutting down...");
+
+    // Remove temporary directory.
+    // According to https://github.com/rust-lang/rust/issues/29497 this might fail on Windows.
+    if let Err(err) = std::fs::remove_dir_all(&*TMP_PATH) {
+        tracing::error!("Failed to remove temporary directory: {}", err);
+    }
 }
