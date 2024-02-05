@@ -23,7 +23,7 @@ use crate::{
 pub fn router() -> Router<FreyaState> {
     Router::new()
         .route("/", get(get_books).post(upload_book))
-        .route("/:book_id", get(get_book))
+        .route("/:book_id", get(get_book_details))
         .route("/:book_id/cover", get(get_book_cover))
 }
 
@@ -60,7 +60,7 @@ pub struct BookResponse {
     files: Vec<File>,
 }
 
-pub async fn get_book(
+pub async fn get_book_details(
     Session(_): Session,
     Path(book_id): Path<i64>,
     State(state): State<FreyaState>,
@@ -114,7 +114,7 @@ pub async fn get_book_cover(
     State(state): State<FreyaState>,
 ) -> ApiFileResult<Vec<u8>> {
     // Get cover image from the database.
-    let cover = sqlx::query!(
+    let result = sqlx::query!(
         r#"
             SELECT cover
             FROM books
@@ -123,13 +123,22 @@ pub async fn get_book_cover(
         book_id
     )
     .fetch_optional(&state.db)
-    .await
-    .context("Couldn't get cover image from database")?
-    .map(|row| row.cover)
-    .unwrap_or_default();
+    .await;
 
-    // Return cover image.
-    cover.ok_or(ApiError::FileNotFound)
+    let placeholder_cover = include_bytes!("../../placeholder-cover.jpg");
+
+    // Check if the query failed.
+    match result {
+        Ok(Some(record)) => match record.cover {
+            Some(cover) => Ok(cover.to_vec()),
+            None => Ok(placeholder_cover.to_vec()),
+        },
+        Ok(None) => Ok(placeholder_cover.to_vec()),
+        Err(err) => {
+            tracing::error!("Failed to get cover image from database: {:?}", err);
+            Ok(placeholder_cover.to_vec())
+        }
+    }
 }
 
 #[derive(TryFromMultipart)]
@@ -199,11 +208,12 @@ pub async fn upload_book(
             .with_context(|| ApiError::FFProbeFailed(path.to_string()))?;
 
         // Get file name from file path.
+        // Remove file extension and replace underscores with spaces.
         let name = std::path::Path::new(&path)
-            .file_name()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string();
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .map(|s| s.replace('_', " "))
+            .unwrap_or_else(|| path.clone());
 
         file_data.push(FileData {
             path,
