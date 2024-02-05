@@ -2,29 +2,30 @@ import { create } from "zustand"
 import { immer } from "zustand/middleware/immer"
 
 import { SessionInfo } from "./api/authentication"
+import { Theme } from "./common"
 
 type State = {
-	initFinished: boolean
+	theme: Theme
 	sessionInfo: SessionInfo | null
 }
 
 type Actions = {
-	finishInit: () => void
 	setSessionInfo: (sessionInfo: SessionInfo) => void
+	setTheme: (theme: Theme) => void
 	reset: () => void
 }
 
 const initialState: State = {
-	initFinished: false,
+	theme: "system",
 	sessionInfo: null,
 }
 
 export const useStore = create<State & Actions>()(
 	immer(set => ({
 		...initialState,
-		finishInit: () =>
+		setTheme: (theme: Theme) =>
 			set(state => {
-				state.initFinished = true
+				state.theme = theme
 			}),
 		setSessionInfo: (sessionInfo: SessionInfo) =>
 			set(state => {

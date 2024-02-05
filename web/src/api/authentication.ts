@@ -52,7 +52,6 @@ export const checkSession = async () => {
 	if (res.success) {
 		const store = useStore.getState()
 		store.setSessionInfo(res.data)
-		store.finishInit()
 	}
 }
 // Send a request to the API to log out the current user.

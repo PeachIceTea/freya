@@ -55,12 +55,15 @@ export default function Book() {
 				className="g-col-12 g-col-md-4 sticky-md-top"
 				style={{
 					height: "fit-content",
+					// Make sure it doesn't overlap the navbar. Bit hacky.
+					// TODO: Find a better way. (Yeah, right.)
+					top: `${document.querySelector(".navbar")?.clientHeight ?? 0}px`,
 				}}
 			>
 				<Image
 					src={bookCoverURL(book.id)}
 					alt={book.title}
-					className="img-fluid mt-2"
+					className="img-fluid rounded mt-2 shadow-sm"
 				/>
 				<h4>
 					{t("book-details--title", {
