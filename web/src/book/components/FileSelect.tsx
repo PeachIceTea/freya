@@ -118,7 +118,7 @@ export function FileSelect({
 					onClick={() => handleFileClick(entry)}
 				>
 					<CategoryIcon category={entry.category} />
-					{entry.name}
+					<span className="text-body-emphasis">{entry.name}</span>
 				</ListGroup.Item>
 			)
 		}) || []

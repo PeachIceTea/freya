@@ -1,4 +1,4 @@
-$primary: #a62c21;
+$primary: #c02929;
 $success: #28a745;
 $info: #17a2b8;
 $warning: #ffc107;
@@ -21,4 +21,10 @@ body {
 	flex-direction: column;
 }
 
+/* Align Material Design Icons with text */
+svg {
+	vertical-align: -0.125em;
+}
+
 @import "./navbar.scss";
+@import "./player.scss";

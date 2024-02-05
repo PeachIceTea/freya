@@ -39,6 +39,8 @@ books--add-book-button = Add book
 # Book details
 book-details--title = {$title} by {$author}
 book-details--title-placeholder = Book details
+book-details--start-listening = Start listening
+book-details--add-to = Add to:
 
 # New book
 new-book--title = Add a book to Freya
@@ -82,3 +84,7 @@ new-book--tab-cover-extracted = Use extracted image
 new-book--cover-extracted-explainer = This image was extracted from the audio files you selected.
 
 new-book--submit-button = Add book
+
+# Player
+player--volume = Volume
+player--playback-speed = Playback speed

@@ -31,12 +31,18 @@ export function useTitle(
 }
 
 // Format seconds to MM:SS or HH:MM:SS depending if the duration is longer than an hour.
-export function formatDuration(seconds: number) {
+export function formatDuration(seconds?: number, match?: number): string {
+	if (seconds === undefined || Number.isNaN(seconds)) return "00:00"
+	const matchStr = formatDuration(match)
+
 	const hours = Math.floor(seconds / 3600)
 	const minutes = Math.floor((seconds % 3600) / 60)
 	const secs = Math.ceil(seconds % 60)
 
-	const hoursStr = hours > 0 ? `${String(hours).padStart(2, "0")}:` : ""
+	const hoursStr =
+		hours > 0 || matchStr?.length === 8
+			? `${String(hours).padStart(2, "0")}:`
+			: ""
 	const minutesStr = `${String(minutes).padStart(2, "0")}:`
 	const secondsStr = String(secs).padStart(2, "0")
 
@@ -115,4 +121,43 @@ export function useTheme() {
 	}
 
 	return [theme, setTheme] as const
+}
+
+// Capitalize the first letter of a string.
+export function capitalize(s: string) {
+	return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+// Function to get user volume preference from local storage.
+export const VolumeLocalStorageKey = "freya-volume"
+export function getVolumeFromLocalStorage() {
+	let volume = 1
+
+	const localStorageVolume = localStorage.getItem(VolumeLocalStorageKey)
+	if (localStorageVolume) {
+		try {
+			volume = parseFloat(localStorageVolume)
+		} catch {
+			localStorage.removeItem(VolumeLocalStorageKey)
+		}
+	}
+
+	return volume
+}
+
+// Function to get the user playback speed preference from local storage.
+export const PlaybackSpeedLocalStorageKey = "freya-playback-speed"
+export function getPlaybackSpeedFromLocalStorage() {
+	let speed = 1
+
+	const localStorageSpeed = localStorage.getItem(PlaybackSpeedLocalStorageKey)
+	if (localStorageSpeed) {
+		try {
+			speed = parseFloat(localStorageSpeed)
+		} catch {
+			localStorage.removeItem(PlaybackSpeedLocalStorageKey)
+		}
+	}
+
+	return speed
 }

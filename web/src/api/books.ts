@@ -75,6 +75,7 @@ export const BookDetailsSchema = BookSchema.and(
 		duration: z.number(),
 	}),
 )
+export type BookDetails = z.infer<typeof BookDetailsSchema>
 export const BookDetailsResponseSchema = DataResponseSchema(BookDetailsSchema)
 
 export const getBook = async (id: number) => {

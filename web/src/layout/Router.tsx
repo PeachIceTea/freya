@@ -1,7 +1,7 @@
 import { Redirect, Route, Switch, useLocation } from "wouter"
 
 import Login from "../Login"
-import Book from "../book/Book"
+import Book from "../book/BookDetails"
 import Books from "../book/Books"
 import NewBook from "../book/NewBook"
 import { useQuery } from "../common"
@@ -10,42 +10,46 @@ import { useStore } from "../store"
 export default function Router() {
 	const state = useStore()
 
-	return state.sessionInfo === null ? (
-		<Switch>
-			<Route path="/login">
-				<Login />
-			</Route>
+	return (
+		<div className="mb-2">
+			{state.sessionInfo === null ? (
+				<Switch>
+					<Route path="/login">
+						<Login />
+					</Route>
 
-			<Route>
-				<CatchUnauthorized />
-			</Route>
-		</Switch>
-	) : (
-		<Switch>
-			<Route path="/">
-				<Redirect to="/book" />
-			</Route>
+					<Route>
+						<CatchUnauthorized />
+					</Route>
+				</Switch>
+			) : (
+				<Switch>
+					<Route path="/">
+						<Redirect to="/book" />
+					</Route>
 
-			<Route path="/book">
-				<Books />
-			</Route>
+					<Route path="/book">
+						<Books />
+					</Route>
 
-			<Route path="/book/new">
-				<NewBook />
-			</Route>
+					<Route path="/book/new">
+						<NewBook />
+					</Route>
 
-			<Route path="/book/:id">
-				<Book />
-			</Route>
+					<Route path="/book/:id">
+						<Book />
+					</Route>
 
-			<Route path="/login">
-				<RedirectBack />
-			</Route>
+					<Route path="/login">
+						<RedirectBack />
+					</Route>
 
-			<Route>
-				<h1>Not Found</h1>
-			</Route>
-		</Switch>
+					<Route>
+						<h1>Not Found</h1>
+					</Route>
+				</Switch>
+			)}
+		</div>
 	)
 }
 
