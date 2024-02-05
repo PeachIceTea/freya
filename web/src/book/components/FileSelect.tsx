@@ -109,6 +109,7 @@ export function FileSelect({
 						"text-secondary": !isActive,
 						"active": isActive,
 					})}
+					variant="action"
 					key={entry.name}
 					role={
 						entry.category === "directory" || entry.category === fileCategory

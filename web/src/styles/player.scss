@@ -1,22 +1,9 @@
 @use "sass:color";
 
-#player {
-	position: fixed;
-	right: 0;
-	bottom: 0;
-	left: 0;
-	z-index: 1031;
-	background-color: #141414;
-	user-select: none;
-	display: flex;
-	justify-content: space-between;
-}
-
 .cover {
 	--size: 128px;
 	width: var(--size);
 	height: var(--size);
-	margin: 0.5em;
 }
 
 .progress-bar-container {

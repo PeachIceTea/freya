@@ -7,7 +7,7 @@ $danger: #dc3545;
 $enable-grid-classes: false;
 $enable-cssgrid: true;
 
-@import "/node_modules/bootstrap/scss/bootstrap.scss";
+@import "bootstrap/scss/bootstrap";
 
 /* Size things to allow the virtual scroll container to determine its own size */
 html,
@@ -25,6 +25,14 @@ body {
 svg {
 	vertical-align: -0.125em;
 }
+
+/* Add a user-select utility */
+$utilities: (
+	"user-select": (
+		property: "user-select",
+		values: none,
+	),
+);
 
 @import "./navbar.scss";
 @import "./player.scss";

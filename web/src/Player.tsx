@@ -10,10 +10,13 @@ import {
 } from "react-icons/tb"
 import { Link } from "wouter"
 
+import Select from "./Select"
 import { bookCoverURL } from "./api/books"
 import { formatDuration } from "./common"
 import { useLocale } from "./locales"
 import { useStore } from "./store"
+
+const PlaybackSpeeds = [1, 1.25, 1.5, 1.75, 2] as const
 
 export default function Player() {
 	const t = useLocale()
@@ -34,14 +37,14 @@ export default function Player() {
 	}, [file])
 
 	// debugging log
-	console.log({
+	/* console.log({
 		playing,
 		selectedBook,
 		selectedFileIndex,
 		file,
 		fileUrl,
 		progress,
-	})
+	}) */
 
 	// Create a reference to the audio element
 	const audioRef = useRef<HTMLAudioElement>(null)
@@ -79,11 +82,6 @@ export default function Player() {
 	function seek(to: number) {
 		if (audioRef.current) {
 			audioRef.current.currentTime = to
-		}
-	}
-	function seekPercent(percent: number) {
-		if (audioRef.current) {
-			audioRef.current.currentTime = (percent / 100) * audioRef.current.duration
 		}
 	}
 
@@ -197,7 +195,7 @@ export default function Player() {
 		<>
 			{isActive && (
 				<div
-					className="fixed-bottom grid text-white"
+					className="fixed-bottom grid text-white position-fixed bottom-0 z-3 justify-content-between user-select-none"
 					hidden={!isActive}
 					style={{
 						backgroundColor: "#141414",
@@ -206,7 +204,7 @@ export default function Player() {
 					<div className="g-col-4 d-flex">
 						<Link to={`/book/${selectedBook.id}`}>
 							<Image
-								className="cover rounded"
+								className="cover m-2 rounded"
 								src={bookCoverURL(selectedBook.id)}
 							/>
 						</Link>
@@ -276,8 +274,8 @@ export default function Player() {
 						<input
 							type="range"
 							min="0"
-							max={audioRef.current?.duration}
-							value={audioRef.current?.currentTime}
+							max={audioRef.current?.duration || 0}
+							value={audioRef.current?.currentTime || 0}
 							step={0.1}
 							className="progress-bar mb-2"
 							style={{
@@ -294,6 +292,7 @@ export default function Player() {
 									audioRef.current?.duration,
 								)}
 							</span>
+
 							<span>{formatDuration(audioRef.current?.duration)}</span>
 						</div>
 					</div>
@@ -315,29 +314,18 @@ export default function Player() {
 							/>
 						</div>
 						<div className="d-flex flex-column w-50">
-							<span>{t("player--playback-speed")}</span>
-							<Form.Select
-								onChange={event =>
-									state.setPlaybackSpeed(parseFloat(event.target.value))
-								}
+							<span className="mb-1">{t("player--playback-speed")}</span>
+							<Select
+								options={PlaybackSpeeds.map(speed => ({
+									value: speed,
+									label: `${speed}x`,
+								}))}
 								value={state.playbackSpeed}
-							>
-								<option value={1} selected={state.playbackSpeed === 1}>
-									1x
-								</option>
-								<option value={1.25} selected={state.playbackSpeed === 1.25}>
-									1.25x
-								</option>
-								<option value={1.5} selected={state.playbackSpeed === 1.5}>
-									1.5x
-								</option>
-								<option value={1.75} selected={state.playbackSpeed === 1.75}>
-									1.75x
-								</option>
-								<option value={2} selected={state.playbackSpeed === 2}>
-									2x
-								</option>
-							</Form.Select>
+								onChange={value => {
+									state.setPlaybackSpeed(value)
+								}}
+								data-bs-theme="dark"
+							/>
 						</div>
 					</div>
 				</div>
