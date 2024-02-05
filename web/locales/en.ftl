@@ -8,6 +8,10 @@ app--title = Freya
 # Navbar
 navbar--login = Log in
 navbar--logout = Log out
+navbar--theme-dark = Dark
+navbar--theme-light = Light
+navbar--theme-system = System
+navbar--theme-active = Active
 
 # Authentication
 server-authentication--already-logged-in = You are already logged in.
