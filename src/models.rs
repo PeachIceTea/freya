@@ -49,6 +49,7 @@ pub struct File {
     pub id: i64,
     pub book_id: i64,
 
+    #[serde(skip)]
     pub path: String,
 
     pub name: String,

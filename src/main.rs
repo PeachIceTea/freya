@@ -7,6 +7,7 @@ mod util;
 
 use axum::Router;
 use tokio::signal;
+use tower_http::compression::CompressionLayer;
 use tracing_subscriber::prelude::*;
 
 use crate::util::storage::TMP_PATH;
@@ -34,13 +35,17 @@ async fn main() {
     // Build application.
     let state: state::FreyaState = state::FreyaState::new().await;
 
+    // Include the frontend in the release profile.
     #[cfg(profile = "release")]
     let app = Router::new()
         .nest("/api", api::build_router(state).await)
         .fallback(serve::serve_frontend);
 
+    // Build only the API in the debug profile.
     #[cfg(profile = "debug")]
-    let app = Router::new().nest("/api", api::build_router(state).await);
+    let app = Router::new()
+        .nest("/api", api::build_router(state).await)
+        .layer(CompressionLayer::new());
 
     // Get the port from the environment.
     // Default to 3000 if PORT is not set.
@@ -48,6 +53,7 @@ async fn main() {
         .unwrap_or_else(|_| "3000".to_string())
         .parse()
         .expect("PORT should be a number");
+
     // Start the server.
     tracing::info!("Starting server at http://localhost:{}", port);
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))

@@ -58,7 +58,6 @@ export const useBooks = () => {
 export const FileSchema = z.object({
 	id: z.number().int(),
 	book_id: z.number().int(),
-	path: z.string(),
 	name: z.string(),
 	position: z.number().int(),
 	duration: z.number(),

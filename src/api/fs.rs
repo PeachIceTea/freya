@@ -1,7 +1,11 @@
-use std::path::Path;
-
 use anyhow::Context;
-use axum::{extract::Query, routing::get, Router};
+use axum::{
+    extract::{Path, Query, State},
+    http::HeaderMap,
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -11,6 +15,7 @@ use crate::{
         ffmpeg::{ffprobe_book_details, FileInfo},
         list_fs::{get_file_system_list, Entry, IMAGE_EXTENSIONS},
         response::{ApiError, ApiFileResult, ApiResult, DataResponse},
+        send_file::send_file,
         session::{AdminSession, Session},
         storage::TMP_PATH,
     },
@@ -28,6 +33,7 @@ pub fn router() -> Router<FreyaState> {
         .route("/", get(fs))
         .route("/info", get(ffprobe))
         .route("/tmp-cover", get(get_tmp_cover))
+        .route("/audio/:file_id", get(get_audio_file))
 }
 
 // Query for the file system list.
@@ -60,7 +66,7 @@ pub async fn fs(
         .await
         .context(ApiError::CouldNotListDirectory)?;
 
-    let parent_path = Path::new(&path)
+    let parent_path = std::path::Path::new(&path)
         .parent()
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_else(|| "/".to_string());
@@ -92,17 +98,17 @@ pub async fn ffprobe(
     data_response!(FfprobeResponse { path, info })
 }
 
-#[derive(Deserialize)]
-pub struct TemporaryCoverQuery {
-    name: String,
-}
-
 // If PathBuf::join() is called with an absolute path, it will ignore the previous path. This allows
 // the use of this function for both extracted files and files selected from the file system. It
 // also theoretically allows the use of this function to download arbitrary files from the server.
 // Not sure that is an actual attack vector, but it is something to keep in mind. To limit the
 // potential damage, this function can only be called by an admin and checks if the file has an
 // image extension.
+#[derive(Deserialize)]
+pub struct TemporaryCoverQuery {
+    name: String,
+}
+
 pub async fn get_tmp_cover(
     AdminSession(_): AdminSession,
     Query(TemporaryCoverQuery { name }): Query<TemporaryCoverQuery>,
@@ -125,4 +131,24 @@ pub async fn get_tmp_cover(
         .with_context(|| format!("Failed to read image file: {}", path.to_string_lossy()))?;
 
     Ok(data)
+}
+
+// Send user the requested audio file.
+// We use the path stored in the database to get the file.
+
+pub async fn get_audio_file(
+    Session(_): Session,
+    Path(file_id): Path<String>,
+    headers: HeaderMap,
+    State(state): State<FreyaState>,
+) -> ApiFileResult<impl IntoResponse> {
+    // Get file path from database.
+    let file = sqlx::query!("SELECT path FROM files WHERE id = $1", file_id)
+        .fetch_optional(&state.db)
+        .await
+        .context("Could not connect to database")?
+        .context(ApiError::InvalidPath)?
+        .path;
+
+    Ok(send_file(&file, Some(&headers)).await)
 }
