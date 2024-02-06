@@ -1,4 +1,3 @@
-import classNames from "classnames"
 import { useEffect, useState } from "react"
 import { Button, Form, InputGroup, ListGroup, Modal } from "react-bootstrap"
 import {
@@ -102,13 +101,8 @@ export function FileSelect({
 	// Convert file list to array.
 	const fileList =
 		data?.directory.map(entry => {
-			const isActive = editFiles.some(file => file.path === entry.path)
 			return (
 				<ListGroup.Item
-					className={classNames({
-						"text-secondary": !isActive,
-						"active": isActive,
-					})}
 					variant="action"
 					key={entry.name}
 					role={
@@ -116,10 +110,11 @@ export function FileSelect({
 							? "button"
 							: "none"
 					}
+					active={editFiles.some(file => file.path === entry.path)}
 					onClick={() => handleFileClick(entry)}
 				>
 					<CategoryIcon category={entry.category} />
-					<span className="text-body-emphasis">{entry.name}</span>
+					{entry.name}
 				</ListGroup.Item>
 			)
 		}) || []
@@ -144,7 +139,7 @@ export function FileSelect({
 				</label>
 			</InputGroup>
 
-			<Modal show={showModal} size="xl" backdrop="static" keyboard={false}>
+			<Modal show={showModal} size="xl" onHide={exitModal}>
 				<Modal.Header>
 					<InputGroup className="flex-grow-1">
 						<Button
