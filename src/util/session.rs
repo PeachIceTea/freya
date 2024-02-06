@@ -41,7 +41,7 @@ pub static SESSION_LIFETIME: once_cell::sync::Lazy<time::Duration> =
 pub struct SessionInfo {
     #[serde(skip)]
     pub session_id: String,
-    user_id: i64,
+    pub user_id: i64,
     #[serde(with = "time::serde::iso8601")]
     last_accessed: time::OffsetDateTime,
     username: String,

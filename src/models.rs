@@ -61,3 +61,20 @@ pub struct File {
     #[serde(with = "time::serde::iso8601")]
     pub modified: OffsetDateTime,
 }
+
+#[derive(Serialize)]
+pub struct LibraryEntry {
+    pub id: i64,
+
+    pub account_id: i64,
+    pub book_id: i64,
+    pub file_id: i64,
+    pub progress: f64,
+
+    pub list: String,
+
+    #[serde(with = "time::serde::iso8601")]
+    pub created: OffsetDateTime,
+    #[serde(with = "time::serde::iso8601")]
+    pub modified: OffsetDateTime,
+}

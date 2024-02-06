@@ -1,21 +1,23 @@
+use std::fmt::{Display, Formatter};
+
 use anyhow::Context;
 use axum::{
     body::Bytes,
     extract::{Path, State},
-    routing::get,
-    Router,
+    routing::{get, post},
+    Json, Router,
 };
 use axum_typed_multipart::{FieldData, TryFromMultipart, TypedMultipart};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
-    api_bail, data_response,
+    api_bail, api_response, data_response,
     models::{Book, File},
     state::FreyaState,
     util::{
         cover::get_cover_bytes,
         ffmpeg::ffprobe_duration,
-        response::{ApiError, ApiFileResult, ApiResult, DataResponse},
+        response::{ApiError, ApiFileResult, ApiResult, DataResponse, SuccessResponse},
         session::{AdminSession, Session},
     },
 };
@@ -25,6 +27,7 @@ pub fn router() -> Router<FreyaState> {
         .route("/", get(get_books).post(upload_book))
         .route("/:book_id", get(get_book_details))
         .route("/:book_id/cover", get(get_book_cover))
+        .route("/:book_id/library", post(set_book_list))
 }
 
 pub async fn get_books(
@@ -271,4 +274,58 @@ pub async fn upload_book(
     trx.commit().await.context("Failed to commit transaction")?;
 
     data_response!(UploadBookResponse { book_id })
+}
+
+// Define the library lists.
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum LibraryLists {
+    // TODO: Maybe allow users to create their own lists?
+    Listening,
+    WantToListen,
+    Finished,
+    Abandoned,
+}
+
+impl Display for LibraryLists {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LibraryLists::Listening => write!(f, "listening"),
+            LibraryLists::WantToListen => write!(f, "want_to_listen"),
+            LibraryLists::Finished => write!(f, "finished"),
+            LibraryLists::Abandoned => write!(f, "abandoned"),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct SetBookList {
+    list: LibraryLists,
+}
+
+// Move book into a library list.
+pub async fn set_book_list(
+    Session(session): Session,
+    Path(book_id): Path<i64>,
+    State(state): State<FreyaState>,
+    Json(SetBookList { list }): Json<SetBookList>,
+) -> ApiResult<SuccessResponse> {
+    // Upsert a library entry.
+    let list = list.to_string();
+    sqlx::query!(
+        r#"
+            INSERT INTO library_entries (user_id, book_id, list)
+            VALUES (?, ?, ?)
+            ON CONFLICT (user_id, book_id) DO UPDATE SET list = ?
+        "#,
+        session.user_id,
+        book_id,
+        list,
+        list,
+    )
+    .execute(&state.db)
+    .await
+    .context("Failed to insert or update library entry")?;
+
+    api_response!("library--list-set")
 }
