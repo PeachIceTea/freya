@@ -72,9 +72,6 @@ export default function BookDetails() {
 				className="g-col-12 g-col-md-4 sticky-md-top"
 				style={{
 					height: "fit-content",
-					// Make sure it doesn't overlap the navbar. Bit hacky.
-					// TODO: Find a better way. (Yeah, right.)
-					top: `${document.querySelector(".navbar")?.clientHeight ?? 0}px`,
 				}}
 			>
 				<Image
