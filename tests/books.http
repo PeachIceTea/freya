@@ -1,8 +1,0 @@
-GET http://localhost:3000/api/book
-Cookie: freya_session=4J8gaEjHowS1DBoJPqWbvyn2QYKDe0l5; HttpOnly; SameSite=Strict; Path=/; Expires=Fri, 05 Jan 2024 12:26:05 GMT
-
-###
-
-POST GET http://localhost:3000/api/book
-Cookie: freya_session=bDoWMdRvFeM4Xs9e1a5dhWkFzx4X8nFY; HttpOnly; SameSite=Strict; Path=/; Expires=Tue, 02 Jan 2024 15:32:07 GMT
-
