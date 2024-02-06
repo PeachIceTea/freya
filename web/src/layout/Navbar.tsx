@@ -19,7 +19,14 @@ export default function FreyaNavbar() {
 	}
 
 	return (
-		<Navbar bg="dark" variant="dark" sticky="top" collapseOnSelect expand="md">
+		<Navbar
+			bg="dark"
+			variant="dark"
+			sticky="top"
+			collapseOnSelect
+			expand="md"
+			className="shadow-sm px-2"
+		>
 			<Container>
 				<Link to="/" className="text-decoration-none">
 					<Navbar.Brand>{t("app--title")}</Navbar.Brand>

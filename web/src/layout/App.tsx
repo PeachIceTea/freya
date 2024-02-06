@@ -8,7 +8,7 @@ import Router from "./Router"
 export default function App() {
 	return (
 		<LocalizationProvider l10n={locales}>
-			<div id="app">
+			<div id="app" className="vh-100 d-flex flex-column">
 				<FreyaNavbar />
 				<Router />
 				<Player />

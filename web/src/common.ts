@@ -161,3 +161,30 @@ export function getPlaybackSpeedFromLocalStorage() {
 
 	return speed
 }
+
+// Hook to check if the viewport is smaller than --bs-breakpoint-lg.
+const breakpointName = "--bs-breakpoint-lg"
+export function useIsMobile() {
+	const bsBreakpointMd = getComputedStyle(
+		document.documentElement,
+	).getPropertyValue(breakpointName)
+
+	const [isMobile, setIsMobile] = useState(
+		window.matchMedia(`(max-width: ${bsBreakpointMd})`).matches,
+	)
+
+	useEffect(() => {
+		const listener = ({ matches }: MediaQueryListEvent) => {
+			setIsMobile(matches)
+		}
+
+		const isMobile = window.matchMedia(`(max-width: ${bsBreakpointMd})`)
+		isMobile.addEventListener("change", listener)
+
+		return () => {
+			isMobile.removeEventListener("change", listener)
+		}
+	}, [bsBreakpointMd])
+
+	return isMobile
+}

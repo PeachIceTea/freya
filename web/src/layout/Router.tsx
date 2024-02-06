@@ -11,7 +11,7 @@ export default function Router() {
 	const state = useStore()
 
 	return (
-		<div className="mb-2">
+		<main className="mb-2 overflow-auto h-100">
 			{state.sessionInfo === null ? (
 				<Switch>
 					<Route path="/login">
@@ -49,7 +49,7 @@ export default function Router() {
 					</Route>
 				</Switch>
 			)}
-		</div>
+		</main>
 	)
 }
 
