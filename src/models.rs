@@ -2,6 +2,7 @@ use serde::Serialize;
 use time::OffsetDateTime;
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct User {
     pub id: i64,
 
@@ -19,6 +20,7 @@ pub struct User {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SessionDBEntry {
     pub id: String,
     pub user_id: i64,
@@ -30,6 +32,7 @@ pub struct SessionDBEntry {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Book {
     pub id: i64,
 
@@ -45,6 +48,7 @@ pub struct Book {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct File {
     pub id: i64,
     pub book_id: i64,
@@ -63,11 +67,15 @@ pub struct File {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LibraryEntry {
     pub id: i64,
 
-    pub account_id: i64,
+    #[serde(skip)]
+    pub user_id: i64,
+    #[serde(skip)]
     pub book_id: i64,
+
     pub file_id: i64,
     pub progress: f64,
 

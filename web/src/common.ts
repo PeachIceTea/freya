@@ -128,6 +128,10 @@ export function capitalize(s: string) {
 	return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+export function fromSnakeCase(s: string) {
+	return s.replace(/_/g, " ")
+}
+
 // Function to get user volume preference from local storage.
 export const VolumeLocalStorageKey = "freya-volume"
 export function getVolumeFromLocalStorage() {

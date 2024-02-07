@@ -38,6 +38,7 @@ pub static SESSION_LIFETIME: once_cell::sync::Lazy<time::Duration> =
 
 // Extract the session from the request.
 #[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SessionInfo {
     #[serde(skip)]
     pub session_id: String,
@@ -204,7 +205,6 @@ pub fn create_session_cookie<'a>(session_id: &str, last_accessed: OffsetDateTime
     Cookie::build((SESSION_COOKIE_NAME, session_id.to_string()))
         .path("/")
         .http_only(true)
-        .domain("localhost")
         .same_site(SameSite::Strict)
         .expires(last_accessed + *SESSION_LIFETIME)
         .build()

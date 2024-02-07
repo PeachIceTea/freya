@@ -19,7 +19,7 @@ export default function Books() {
 		return (
 			<Container>
 				<h1>Books</h1>
-				<p>Error: {t(error.error_code)}</p>
+				<p>Error: {t(error.errorCode)}</p>
 			</Container>
 		)
 	}
@@ -27,7 +27,7 @@ export default function Books() {
 	const booksList = books?.map(book => (
 		<Card
 			key={book.id}
-			className="g-col-12 g-col-md-6 g-col-xl-4"
+			className="g-col-12 g-col-md-6 g-col-xl-4 shadow-sm"
 			role="button"
 		>
 			<Card.Img variant="top" src={bookCoverURL(book.id)} />

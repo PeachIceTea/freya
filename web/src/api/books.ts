@@ -7,6 +7,7 @@ import {
 	get,
 	postMultipart,
 } from "./api"
+import { LibraryEntry } from "./library"
 
 // Schema of book in the database.
 export const BookSchema = z.object({
@@ -57,7 +58,7 @@ export const useBooks = () => {
 // Get a single book by ID.
 export const FileSchema = z.object({
 	id: z.number().int(),
-	book_id: z.number().int(),
+	bookId: z.number().int(),
 	name: z.string(),
 	position: z.number().int(),
 	duration: z.number(),
@@ -70,11 +71,17 @@ export const BookDetailsSchema = BookSchema.and(
 	z.object({
 		files: FilesSchema,
 	}),
-).and(
-	z.object({
-		duration: z.number(),
-	}),
 )
+	.and(
+		z.object({
+			duration: z.number(),
+		}),
+	)
+	.and(
+		z.object({
+			library: LibraryEntry.optional(),
+		}),
+	)
 export type BookDetails = z.infer<typeof BookDetailsSchema>
 export const BookDetailsResponseSchema = DataResponseSchema(BookDetailsSchema)
 
@@ -88,6 +95,7 @@ export const useBook = (id: number) => {
 		data,
 		error: parseError,
 		isLoading,
+		mutate,
 	} = useSWR(`/book/${id}`, () => getBook(id))
 
 	let error
@@ -105,7 +113,7 @@ export const useBook = (id: number) => {
 		error = data
 	}
 
-	return { book, error, isLoading }
+	return { book, error, isLoading, mutate }
 }
 
 // Generate URL for book cover image.
@@ -113,7 +121,7 @@ export const bookCoverURL = (id: number) => `/api/book/${id}/cover`
 
 // Upload book to server.
 export const BookUploadSchema = z.object({
-	book_id: z.number().int(),
+	bookId: z.number().int(),
 })
 export const BookUploadResponseSchema = DataResponseSchema(BookUploadSchema)
 export type BookUploadResponse = z.infer<typeof BookUploadResponseSchema>

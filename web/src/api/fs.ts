@@ -24,7 +24,7 @@ export type Entries = z.infer<typeof EntriesSchema>
 export const EntriesResponseSchema = DataResponseSchema(
 	z.object({
 		path: z.string(),
-		parent_path: z.string(),
+		parentPath: z.string(),
 		directory: EntriesSchema,
 	}),
 )

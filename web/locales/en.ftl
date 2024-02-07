@@ -40,7 +40,9 @@ books--add-book-button = Add book
 book-details--title = {$title} by {$author}
 book-details--title-placeholder = Book details
 book-details--start-listening = Start listening
+book-details--continue-listening = Continue listening
 book-details--add-to = Add to:
+book-details--is-in = Is in:
 
 # New book
 new-book--title = Add a book to Freya

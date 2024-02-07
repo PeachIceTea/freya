@@ -43,6 +43,7 @@ pub struct FsQuery {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FsResponse {
     path: String,
     parent_path: String,
@@ -79,6 +80,7 @@ pub async fn fs(
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FfprobeResponse {
     path: String,
     info: FileInfo,

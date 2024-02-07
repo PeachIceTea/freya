@@ -14,6 +14,7 @@ import { Link } from "wouter"
 
 import Select from "./Select"
 import { bookCoverURL } from "./api/books"
+import { addBookToLibrary } from "./api/library"
 import { formatDuration, useIsMobile } from "./common"
 import { useLocale } from "./locales"
 import { useStore } from "./store"
@@ -26,7 +27,8 @@ export default function Player() {
 
 	// Get the current state from the store
 	const state = useStore()
-	const { playing, selectedBook, selectedFileIndex, volume } = state
+	const { playing, selectedBook, volume } = state
+
 	const file =
 		selectedFileIndex !== null
 			? selectedBook?.files[selectedFileIndex]
@@ -163,6 +165,7 @@ export default function Player() {
 					!Number.isNaN(ref.currentTime)
 				) {
 					setProgress((ref.currentTime / ref.duration) * 100)
+					state.updateProgress(ref.currentTime)
 				}
 			}
 			ref.addEventListener("timeupdate", handleTimeUpdate)

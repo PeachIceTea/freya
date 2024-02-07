@@ -109,7 +109,7 @@ impl IntoResponse for ApiError {
             }
 
             Self::AnyhowError(err) => {
-                ErrorResponse::new(api_error.to_string(), Some(err.to_string()))
+                ErrorResponse::new("server-error--internal".to_string(), Some(err.to_string()))
             }
         };
         (status, body).into_response()
@@ -117,6 +117,7 @@ impl IntoResponse for ApiError {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SuccessResponse {
     success: bool,
     pub message: &'static str,
@@ -135,6 +136,7 @@ impl SuccessResponse {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DataResponse<T>
 where
     T: Serialize + Sized,
@@ -156,6 +158,7 @@ where
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct ErrorResponse {
     success: bool,
     error_code: String,

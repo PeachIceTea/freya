@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     api_bail, api_response, data_response,
-    models::{Book, File},
+    models::{Book, File, LibraryEntry},
     state::FreyaState,
     util::{
         cover::get_cover_bytes,
@@ -28,6 +28,7 @@ pub fn router() -> Router<FreyaState> {
         .route("/:book_id", get(get_book_details))
         .route("/:book_id/cover", get(get_book_cover))
         .route("/:book_id/library", post(set_book_list))
+        .route("/:book_id/progress", post(update_progress))
 }
 
 pub async fn get_books(
@@ -57,14 +58,17 @@ pub async fn get_books(
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BookResponse {
     #[serde(flatten)]
     book: Book,
     files: Vec<File>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    library: Option<LibraryEntry>,
 }
 
 pub async fn get_book_details(
-    Session(_): Session,
+    Session(session): Session,
     Path(book_id): Path<i64>,
     State(state): State<FreyaState>,
 ) -> ApiResult<DataResponse<BookResponse>> {
@@ -108,7 +112,27 @@ pub async fn get_book_details(
     .await
     .context("Couldn't get files from database")?;
 
-    data_response!(BookResponse { book, files })
+    // Get library entry from the database.
+    let library = sqlx::query_as!(
+        LibraryEntry,
+        r#"
+            SELECT *
+            FROM library_entries
+            WHERE user_id = ?
+            AND book_id = ?
+        "#,
+        session.user_id,
+        book_id
+    )
+    .fetch_optional(&state.db)
+    .await
+    .context("Couldn't get library entry from database")?;
+
+    data_response!(BookResponse {
+        book,
+        files,
+        library
+    })
 }
 
 pub async fn get_book_cover(
@@ -159,6 +183,7 @@ struct FileData {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UploadBookResponse {
     book_id: i64,
 }
@@ -314,13 +339,19 @@ pub async fn set_book_list(
     let list = list.to_string();
     sqlx::query!(
         r#"
-            INSERT INTO library_entries (user_id, book_id, list)
-            VALUES (?, ?, ?)
-            ON CONFLICT (user_id, book_id) DO UPDATE SET list = ?
+            INSERT INTO library_entries (user_id, book_id, file_id, list)
+            VALUES ($1, $2, (
+                SELECT id
+                FROM files
+                WHERE book_id = $2
+                ORDER BY position ASC
+                LIMIT 1
+            ), $3)
+            ON CONFLICT (user_id, book_id) DO UPDATE
+            SET list = $3, modified = CURRENT_TIMESTAMP
         "#,
         session.user_id,
         book_id,
-        list,
         list,
     )
     .execute(&state.db)
@@ -328,4 +359,39 @@ pub async fn set_book_list(
     .context("Failed to insert or update library entry")?;
 
     api_response!("library--list-set")
+}
+
+// Update progress.
+#[derive(Deserialize)]
+pub struct UpdateProgress {
+    file_id: i64,
+    progress: f64,
+}
+
+pub async fn update_progress(
+    Session(session): Session,
+    Path(book_id): Path<i64>,
+    State(state): State<FreyaState>,
+    Json(UpdateProgress { file_id, progress }): Json<UpdateProgress>,
+) -> ApiResult<SuccessResponse> {
+    // Update progress.
+    sqlx::query!(
+        r#"
+            UPDATE library_entries
+            SET progress = ?,
+                file_id = ?,
+                modified = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+            AND book_id = ?
+        "#,
+        progress,
+        file_id,
+        session.user_id,
+        book_id,
+    )
+    .execute(&state.db)
+    .await
+    .context("Failed to update progress")?;
+
+    api_response!("library--progress-updated")
 }

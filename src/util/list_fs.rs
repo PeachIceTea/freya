@@ -19,6 +19,7 @@ pub enum FileCategory {
 
 // Filesystem entry.
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Entry {
     name: String,
     path: String,

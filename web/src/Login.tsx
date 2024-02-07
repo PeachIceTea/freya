@@ -31,14 +31,14 @@ export default function Login() {
 
 		const res = await login(username, password)
 		if (!res.success) {
-			setError(res.error_code)
+			setError(res.errorCode)
 			setLoading(false)
 			return
 		}
 
 		const sessionInfo = await getSessionInfo()
 		if (!sessionInfo.success) {
-			setError(sessionInfo.error_code)
+			setError(sessionInfo.errorCode)
 			setLoading(false)
 			return
 		}

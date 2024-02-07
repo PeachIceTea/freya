@@ -56,13 +56,13 @@ export async function api(path: string, options: RequestInit = {}) {
 // Generic error for when the server cannot be reached or returns an unexpected response.
 export const ServerConnectionError: Error = {
 	success: false,
-	error_code: "server-connection-error",
+	errorCode: "server-connection-error",
 }
 
 // Schema for the error response from the API.
 export const ErrorSchema = z.object({
 	success: z.literal(false),
-	error_code: z.string(),
+	errorCode: z.string(),
 	value: z.string().optional(),
 })
 export type Error = z.infer<typeof ErrorSchema>

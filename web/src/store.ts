@@ -18,7 +18,6 @@ type State = {
 
 	// Player state.
 	selectedBook: BookDetails | null
-	selectedFileIndex: number | null
 	playing: boolean
 	volume: number
 	playbackSpeed: number
@@ -37,6 +36,7 @@ type Actions = {
 	prevFile(): boolean
 	setVolume: (volume: number) => void
 	setPlaybackSpeed: (speed: number) => void
+	updateProgress: (fileId: number, progress: number) => void
 }
 
 const initialState = (): State => ({
@@ -71,7 +71,6 @@ export const useStore = create<State & Actions>()(
 		playBookFromStart: (book: BookDetails) =>
 			set(state => {
 				state.selectedBook = book
-				state.selectedFileIndex = 0
 				state.playing = true
 			}),
 		play: () =>
@@ -87,7 +86,6 @@ export const useStore = create<State & Actions>()(
 			set(state => {
 				if (state.selectedBook && state.selectedFileIndex !== null) {
 					if (state.selectedFileIndex < state.selectedBook.files.length - 1) {
-						state.selectedFileIndex = state.selectedFileIndex + 1
 						state.playing = true
 						result = true
 					}
@@ -117,6 +115,12 @@ export const useStore = create<State & Actions>()(
 			set(state => {
 				state.playbackSpeed = speed
 				localStorage.setItem(PlaybackSpeedLocalStorageKey, speed.toString())
+			}),
+		updateProgress: (progress: number) =>
+			set(state => {
+				if (state.selectedBook?.library) {
+					state.selectedBook.library.progress = progress
+				}
 			}),
 	})),
 )

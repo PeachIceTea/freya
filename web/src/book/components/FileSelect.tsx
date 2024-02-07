@@ -144,7 +144,7 @@ export function FileSelect({
 					<InputGroup className="flex-grow-1">
 						<Button
 							variant="outline-secondary"
-							onClick={() => data?.parent_path && setPath(data.parent_path)}
+							onClick={() => data?.parentPath && setPath(data.parentPath)}
 						>
 							<MdKeyboardArrowUp />
 						</Button>

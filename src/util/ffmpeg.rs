@@ -48,6 +48,7 @@ pub struct FFProbeFormat {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FileInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     title: Option<String>,

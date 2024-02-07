@@ -29,8 +29,8 @@ export const login = async (
 
 // Send a request to the API to get the current session info.
 export const SessionInfoSchema = z.object({
-	user_id: z.number().int(),
-	last_accessed: z.string(), // ISO8601 date string
+	userId: z.number().int(),
+	lastAccessed: z.string(), // ISO8601 date string
 	username: z.string(),
 	admin: z.boolean(),
 })

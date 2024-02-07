@@ -23,6 +23,7 @@ pub async fn build_router(state: FreyaState) -> Router {
 }
 
 #[derive(Serialize, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
 struct Greeting {
     success: bool,
     message: &'static str,
@@ -37,6 +38,7 @@ pub async fn greet() -> impl IntoResponse {
 }
 
 #[derive(Serialize, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
 struct NotFound {
     success: bool,
     error_code: &'static str,

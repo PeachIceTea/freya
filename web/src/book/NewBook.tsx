@@ -111,7 +111,7 @@ export default function NewBook() {
 		}
 
 		// Redirect to new book page.
-		setLocation(`/book/${res.data.book_id}`)
+		setLocation(`/book/${res.data.bookId}`)
 	}
 
 	return (
@@ -120,7 +120,7 @@ export default function NewBook() {
 			{error && (
 				<Alert variant="danger">
 					{t(
-						error.error_code,
+						error.errorCode,
 						error.value
 							? {
 									error: error.value,
