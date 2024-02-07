@@ -9,7 +9,8 @@ import {
 } from "react-bootstrap"
 import { useParams } from "wouter"
 
-import { bookCoverURL, useBook } from "../api/books"
+import { bookCoverURL, getBook, useBook } from "../api/books"
+import type { BookDetails } from "../api/books"
 import {
 	LibraryLists,
 	LibraryListsSchema,
@@ -90,6 +91,7 @@ export default function BookDetails() {
 				<span className="fst-italic">{capitalize(fromSnakeCase(list))}</span>
 			</Dropdown.Item>
 		))
+
 	const listButton = (
 		<Button
 			variant="success"
@@ -112,6 +114,38 @@ export default function BookDetails() {
 		</Button>
 	)
 
+	// Function for start listening button.
+	async function startListening() {
+		// Create library entry.
+		await addBookToLibrary(book!.id, LibraryListsSchema.Values.listening)
+
+		// Fetch the book again.
+		try {
+			const res = await mutate(false)
+
+			if (
+				res === undefined ||
+				res.success === false ||
+				res.data.library === undefined
+			) {
+				// This should never happen.
+				console.error(
+					"Book had no library data after adding to listening list.",
+					res,
+				)
+				return
+			}
+
+			// Play the book.
+			// Not sure why we to cast here, but Typescript complains about library being possibly
+			// undefined, even after we explicitly check for that in the if statement before.
+			state.playBook(res.data as Required<BookDetails>)
+		} catch (e) {
+			// TODO: Inform user that something broke.
+			console.error(e)
+		}
+	}
+
 	return (
 		<Container className="grid">
 			<div
@@ -130,10 +164,7 @@ export default function BookDetails() {
 					<h5 className="text-secondary">{book.author}</h5>
 				</div>
 				<div className="mt- d-flex gap-3">
-					<Button
-						variant="primary"
-						onClick={() => state.playBookFromStart(book)}
-					>
+					<Button variant="primary" onClick={startListening}>
 						{t(
 							hasListened
 								? "book-details--continue-listening"

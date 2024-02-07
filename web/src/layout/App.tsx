@@ -1,8 +1,8 @@
 import { LocalizationProvider } from "@fluent/react"
 
-import Player from "../Player"
 import locales from "../locales"
 import FreyaNavbar from "./Navbar"
+import PlayerWrapper from "./PlayerWrapper"
 import Router from "./Router"
 
 export default function App() {
@@ -11,7 +11,7 @@ export default function App() {
 			<div id="app" className="vh-100 d-flex flex-column">
 				<FreyaNavbar />
 				<Router />
-				<Player />
+				<PlayerWrapper />
 			</div>
 		</LocalizationProvider>
 	)

@@ -1,7 +1,7 @@
 import { Redirect, Route, Switch, useLocation } from "wouter"
 
 import Login from "../Login"
-import Book from "../book/BookDetails"
+import BookDetails from "../book/BookDetails"
 import Books from "../book/Books"
 import NewBook from "../book/NewBook"
 import { useQuery } from "../common"
@@ -37,7 +37,7 @@ export default function Router() {
 					</Route>
 
 					<Route path="/book/:id">
-						<Book />
+						<BookDetails />
 					</Route>
 
 					<Route path="/login">

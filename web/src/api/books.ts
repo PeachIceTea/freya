@@ -17,7 +17,7 @@ export const BookSchema = z.object({
 	author: z.string(),
 
 	created: z.string(), // ISO8601 date string
-	updated: z.string().optional(), // ISO8601 date string
+	modified: z.string(), // ISO8601 date string
 })
 export type Book = z.infer<typeof BookSchema>
 
@@ -84,6 +84,7 @@ export const BookDetailsSchema = BookSchema.and(
 	)
 export type BookDetails = z.infer<typeof BookDetailsSchema>
 export const BookDetailsResponseSchema = DataResponseSchema(BookDetailsSchema)
+export type BookDetailsResponse = z.infer<typeof BookDetailsResponseSchema>
 
 export const getBook = async (id: number) => {
 	const res = await get(`/book/${id}`)
@@ -95,7 +96,7 @@ export const useBook = (id: number) => {
 		data,
 		error: parseError,
 		isLoading,
-		mutate,
+		mutate: _mutate,
 	} = useSWR(`/book/${id}`, () => getBook(id))
 
 	let error
@@ -111,6 +112,10 @@ export const useBook = (id: number) => {
 		book = data.data
 	} else {
 		error = data
+	}
+
+	function mutate(shouldRevalidate?: boolean) {
+		return _mutate(getBook(id), shouldRevalidate)
 	}
 
 	return { book, error, isLoading, mutate }

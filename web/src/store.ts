@@ -17,7 +17,7 @@ type State = {
 	sessionInfo: SessionInfo | null
 
 	// Player state.
-	selectedBook: BookDetails | null
+	selectedBook: Required<BookDetails> | null
 	playing: boolean
 	volume: number
 	playbackSpeed: number
@@ -29,14 +29,14 @@ type Actions = {
 	reset: () => void
 
 	// Player actions.
-	playBookFromStart: (book: BookDetails) => void
+	playBook: (book: Required<BookDetails>) => void
 	play(): void
 	pause(): void
-	nextFile(): boolean
-	prevFile(): boolean
+	nextFile: () => boolean
+	prevFile: () => boolean
 	setVolume: (volume: number) => void
 	setPlaybackSpeed: (speed: number) => void
-	updateProgress: (fileId: number, progress: number) => void
+	updateProgress: (progress: number) => void
 }
 
 const initialState = (): State => ({
@@ -45,7 +45,6 @@ const initialState = (): State => ({
 
 	// Player state.
 	selectedBook: null,
-	selectedFileIndex: null,
 	playing: false,
 	volume: getVolumeFromLocalStorage(),
 	playbackSpeed: getPlaybackSpeedFromLocalStorage(),
@@ -68,7 +67,7 @@ export const useStore = create<State & Actions>()(
 			}),
 
 		// Player actions.
-		playBookFromStart: (book: BookDetails) =>
+		playBook: (book: Required<BookDetails>) =>
 			set(state => {
 				state.selectedBook = book
 				state.playing = true
@@ -84,25 +83,60 @@ export const useStore = create<State & Actions>()(
 		nextFile: () => {
 			let result = false
 			set(state => {
-				if (state.selectedBook && state.selectedFileIndex !== null) {
-					if (state.selectedFileIndex < state.selectedBook.files.length - 1) {
-						state.playing = true
-						result = true
-					}
+				// Check if a book is selected.
+				if (!state.selectedBook) {
+					return
 				}
+
+				// Get next file.
+				const currentFile = state.selectedBook.files.find(
+					file => file.id === state.selectedBook!.library.fileId,
+				)
+				const nextFile =
+					state.selectedBook.files[
+						state.selectedBook.files.indexOf(currentFile!) + 1
+					]
+
+				// Check if there is a next file.
+				if (!nextFile) {
+					return
+				}
+
+				// Update library.
+				state.selectedBook.library.fileId = nextFile.id
+				state.selectedBook.library.progress = 0
+				state.playing = true
+				result = true
 			})
 			return result
 		},
 		prevFile: () => {
 			let result = false
 			set(state => {
-				if (state.selectedBook && state.selectedFileIndex !== null) {
-					if (state.selectedFileIndex > 0) {
-						state.selectedFileIndex = state.selectedFileIndex - 1
-						state.playing = true
-						result = true
-					}
+				// Check if a book is selected.
+				if (!state.selectedBook) {
+					return
 				}
+
+				// Get previous file.
+				const currentFile = state.selectedBook.files.find(
+					file => file.id === state.selectedBook!.library.fileId,
+				)!
+				const prevFile =
+					state.selectedBook.files[
+						state.selectedBook.files.indexOf(currentFile!) - 1
+					]
+
+				// Check if there is a previous file.
+				if (!prevFile) {
+					return
+				}
+
+				// Update library.
+				state.selectedBook.library.fileId = prevFile.id
+				state.selectedBook.library.progress = 0
+				state.playing = true
+				result = true
 			})
 			return result
 		},
@@ -118,9 +152,12 @@ export const useStore = create<State & Actions>()(
 			}),
 		updateProgress: (progress: number) =>
 			set(state => {
-				if (state.selectedBook?.library) {
-					state.selectedBook.library.progress = progress
+				// Check if a book is selected.
+				if (!state.selectedBook) {
+					return
 				}
+
+				state.selectedBook.library.progress = progress
 			}),
 	})),
 )

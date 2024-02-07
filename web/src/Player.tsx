@@ -13,45 +13,51 @@ import {
 import { Link } from "wouter"
 
 import Select from "./Select"
-import { bookCoverURL } from "./api/books"
-import { addBookToLibrary } from "./api/library"
+import { BookDetails, bookCoverURL } from "./api/books"
 import { formatDuration, useIsMobile } from "./common"
 import { useLocale } from "./locales"
 import { useStore } from "./store"
 
 const PlaybackSpeeds = [1, 1.25, 1.5, 1.75, 2] as const
 
-export default function Player() {
+// We get the state of the store passed in to ensure that selectedBook and selectedBook.library
+// are not null. Otherwise we would have to check for null all over the place since React doesn't
+// allow us to return early from a component because of hooks.
+export default function Player({
+	playing,
+	selectedBook,
+	volume,
+	playbackSpeed,
+}: {
+	playing: boolean
+	selectedBook: Required<BookDetails>
+	volume: number
+	playbackSpeed: number
+}) {
 	const t = useLocale()
 	const isMobile = useIsMobile()
 
-	// Get the current state from the store
-	const state = useStore()
-	const { playing, selectedBook, volume } = state
+	// Get data from library.
+	const library = selectedBook.library
+	const file = selectedBook.files.find(file => file.id === library.fileId)!
+	const fileUrl = `/api/fs/audio/${file.id}`
 
-	const file =
-		selectedFileIndex !== null
-			? selectedBook?.files[selectedFileIndex]
-			: undefined
-	const fileUrl = file ? `/api/fs/audio/${file.id}` : undefined
-	const [progress, setProgress] = useState(0)
+	// In theory it might be cleaner to get the store functions via props as well, but that seems
+	// like a hassle. I am not sure if this will cause React to rerender the Player component
+	// multiple times on a single state change, but I don't think it will. 🙏
+	const storeFn = useStore(state => {
+		return {
+			play: state.play,
+			pause: state.pause,
+			nextFile: state.nextFile,
+			prevFile: state.prevFile,
+			updateProgress: state.updateProgress,
+			setVolume: state.setVolume,
+			setPlaybackSpeed: state.setPlaybackSpeed,
+		}
+	})
 
-	// Reset progress when the file changes.
-	useEffect(() => {
-		setProgress(0)
-	}, [file])
-
-	// debugging log
-	/* console.log({
-		playing,
-		selectedBook,
-		selectedFileIndex,
-		file,
-		fileUrl,
-		progress,
-	}) */
-
-	// Create a reference to the audio element
+	// Create a reference to the audio element.
 	const audioRef = useRef<HTMLAudioElement>(null)
 
 	// Audio control functions.
@@ -119,7 +125,7 @@ export default function Player() {
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown)
 		}
-	}, [state])
+	}, [audioRef])
 
 	// Sync playing state with the audio element.
 	useEffect(() => {
@@ -139,19 +145,19 @@ export default function Player() {
 	useEffect(() => {
 		if (audioRef.current) {
 			const ref = audioRef.current
-			// Sync events with playing state.
+			// Sync events with playing store.
 			const handlePlay = () => {
-				state.play()
+				storeFn.play()
 			}
 			const handlePause = () => {
-				state.pause()
+				storeFn.pause()
 			}
 			ref.addEventListener("play", handlePlay)
 			ref.addEventListener("pause", handlePause)
 
 			// Listen for end of audio to automatically play next file.
 			const handleEnded = () => {
-				state.nextFile()
+				storeFn.nextFile()
 			}
 			ref.addEventListener("ended", handleEnded)
 
@@ -164,8 +170,7 @@ export default function Player() {
 					ref.currentTime !== undefined &&
 					!Number.isNaN(ref.currentTime)
 				) {
-					setProgress((ref.currentTime / ref.duration) * 100)
-					state.updateProgress(ref.currentTime)
+					storeFn.updateProgress(ref.currentTime)
 				}
 			}
 			ref.addEventListener("timeupdate", handleTimeUpdate)
@@ -178,7 +183,7 @@ export default function Player() {
 				ref.removeEventListener("timeupdate", handleTimeUpdate)
 			}
 		}
-	}, [audioRef, state])
+	}, [audioRef, file, storeFn])
 
 	// Show extra controls.
 	const [_showExtraControls, setShowExtraControls] = useState(false)
@@ -194,14 +199,14 @@ export default function Player() {
 	// Control playback speed.
 	useEffect(() => {
 		if (audioRef.current) {
-			audioRef.current.playbackRate = state.playbackSpeed
+			audioRef.current.playbackRate = playbackSpeed
 		}
-	}, [state.playbackSpeed, audioRef, file])
+	}, [playbackSpeed, audioRef, file])
 
-	// If there is no selected book or file, don't render anything.
-	const isActive =
-		selectedBook && selectedFileIndex !== null && file !== undefined
-	return isActive ? (
+	// Calculate progress.
+	const progress = selectedBook.library.progress / file.duration
+
+	return (
 		<div
 			className={classNames(
 				"text-white",
@@ -214,7 +219,6 @@ export default function Player() {
 					"flex-column": isMobile,
 				},
 			)}
-			hidden={!isActive}
 			style={{
 				backgroundColor: "#141414",
 			}}
@@ -273,7 +277,7 @@ export default function Player() {
 						className="player-control"
 						role="button"
 						onClick={() => {
-							state.prevFile()
+							storeFn.prevFile()
 						}}
 					/>
 					<TbRewindBackward30
@@ -290,7 +294,7 @@ export default function Player() {
 							className="player-control"
 							role="button"
 							onClick={() => {
-								state.pause()
+								storeFn.pause()
 							}}
 						/>
 					) : (
@@ -298,7 +302,7 @@ export default function Player() {
 							className="player-control"
 							role="button"
 							onClick={() => {
-								state.play()
+								storeFn.play()
 							}}
 						/>
 					)}
@@ -315,7 +319,7 @@ export default function Player() {
 						className="player-control"
 						role="button"
 						onClick={() => {
-							state.nextFile()
+							storeFn.nextFile()
 						}}
 					/>
 					<div
@@ -367,7 +371,7 @@ export default function Player() {
 							background: `linear-gradient(to right, #fff ${volume * 100}%, #3a3a3a 0%)`,
 						}}
 						onChange={event => {
-							state.setVolume(parseFloat(event.target.value))
+							storeFn.setVolume(parseFloat(event.target.value))
 						}}
 					/>
 				</div>
@@ -378,14 +382,14 @@ export default function Player() {
 							value: speed,
 							label: `${speed}x`,
 						}))}
-						value={state.playbackSpeed}
+						value={playbackSpeed}
 						onChange={value => {
-							state.setPlaybackSpeed(value)
+							storeFn.setPlaybackSpeed(value)
 						}}
 						data-bs-theme="dark"
 					/>
 				</div>
 			</div>
 		</div>
-	) : null
+	)
 }
