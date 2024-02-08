@@ -1,6 +1,7 @@
 import { Redirect, Route, Switch, useLocation } from "wouter"
 
 import Login from "../Login"
+import UserManagement from "../UserManagement"
 import BookDetails from "../book/BookDetails"
 import Books from "../book/Books"
 import NewBook from "../book/NewBook"
@@ -40,8 +41,13 @@ export default function Router() {
 						<BookDetails />
 					</Route>
 
+					<Route path="/user-management">
+						<UserManagement />
+					</Route>
+
 					<Route path="/login">
 						<RedirectBack />
+						MUs
 					</Route>
 
 					<Route>

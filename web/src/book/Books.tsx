@@ -1,4 +1,4 @@
-import { Button, Card, Container } from "react-bootstrap"
+import { Card, Container } from "react-bootstrap"
 import { Link } from "wouter"
 
 import { bookCoverURL, useBooks } from "../api/books"
@@ -43,9 +43,6 @@ export default function Books() {
 		<Container>
 			<div className="d-flex justify-content-between align-items-center">
 				<h1>{t("books--title")}</h1>
-				<Link to="/book/new">
-					<Button variant="primary">{t("books--add-book-button")}</Button>
-				</Link>
 			</div>
 			<div className="grid">{booksList}</div>
 		</Container>

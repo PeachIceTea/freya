@@ -12,6 +12,8 @@ navbar--theme-dark = Dark
 navbar--theme-light = Light
 navbar--theme-system = System
 navbar--theme-active = Active
+navbar--new-book = Add book
+navbar--user-management = User management
 
 # Authentication
 server-authentication--already-logged-in = You are already logged in.
@@ -33,8 +35,7 @@ server-upload--invalid-file-path = The file "{$value}" was not found on the serv
 # Books
 server-books--failed-to-get-cover-image = The server failed to get the cover image.
 
-books--title = Books
-books--add-book-button = Add book
+books--title = All Books
 
 # Book details
 book-details--title = {$title} by {$author}
@@ -90,3 +91,6 @@ new-book--submit-button = Add book
 # Player
 player--volume = Volume
 player--playback-speed = Playback speed
+
+# User management
+user-management--title = User management

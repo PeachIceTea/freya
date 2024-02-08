@@ -1,5 +1,6 @@
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap"
 import { MdLogin, MdLogout } from "react-icons/md"
+import { TbBookUpload, TbUser } from "react-icons/tb"
 import { Link } from "wouter"
 
 import { logout } from "../api/authentication"
@@ -44,6 +45,14 @@ export default function FreyaNavbar() {
 							</Link>
 						) : (
 							<NavDropdown title={state.sessionInfo.username} align="end">
+								<NavDropdown.Item as={Link} to="/user-management">
+									<TbUser />
+									{t("navbar--user-management")}
+								</NavDropdown.Item>
+								<NavDropdown.Item as={Link} to="/book/new">
+									<TbBookUpload /> {t("navbar--new-book")}
+								</NavDropdown.Item>
+								<NavDropdown.Divider />
 								<NavDropdown.Item onClick={handleLogout}>
 									<MdLogout />
 									{t("navbar--logout")}
