@@ -14,6 +14,7 @@ import { Link } from "wouter"
 
 import Select from "./Select"
 import { BookDetails, bookCoverURL } from "./api/books"
+import { updateProgress } from "./api/library"
 import { formatDuration, useIsMobile } from "./common"
 import { useLocale } from "./locales"
 import { useStore } from "./store"
@@ -59,6 +60,15 @@ export default function Player({
 
 	// Create a reference to the audio element.
 	const audioRef = useRef<HTMLAudioElement>(null)
+
+	// Set audioRef to progress whenever a new book is selected.
+	useEffect(() => {
+		if (audioRef.current) {
+			audioRef.current.currentTime = library.progress
+		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [audioRef, selectedBook.id])
 
 	// Audio control functions.
 	async function play() {
@@ -185,6 +195,18 @@ export default function Player({
 		}
 	}, [audioRef, file, storeFn])
 
+	// Update progress on the server every 30 seconds.
+	useEffect(() => {
+		const interval = setInterval(() => {
+			updateProgress(
+				selectedBook.id,
+				file.id,
+				audioRef.current?.currentTime ?? 0,
+			)
+		}, 30 * 1000)
+		return () => clearInterval(interval)
+	}, [audioRef, file.id, selectedBook.id])
+
 	// Show extra controls.
 	const [_showExtraControls, setShowExtraControls] = useState(false)
 	const showExtraControls = _showExtraControls || !isMobile
@@ -204,7 +226,7 @@ export default function Player({
 	}, [playbackSpeed, audioRef, file])
 
 	// Calculate progress.
-	const progress = selectedBook.library.progress / file.duration
+	const progress = (selectedBook.library.progress / file.duration) * 100
 
 	return (
 		<div

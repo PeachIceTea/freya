@@ -27,3 +27,11 @@ export const LibraryEntry = z.object({
 export type LibraryEntry = z.infer<typeof LibraryEntry>
 
 // Update progress of a book in user's library.
+export const updateProgress = async (
+	bookId: number,
+	fileId: number,
+	progress: number,
+) => {
+	const res = await post(`/book/${bookId}/progress`, { fileId, progress })
+	return ResponseSchema.parse(res)
+}

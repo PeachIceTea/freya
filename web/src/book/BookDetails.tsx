@@ -9,7 +9,7 @@ import {
 } from "react-bootstrap"
 import { useParams } from "wouter"
 
-import { bookCoverURL, getBook, useBook } from "../api/books"
+import { bookCoverURL, useBook } from "../api/books"
 import type { BookDetails } from "../api/books"
 import {
 	LibraryLists,
@@ -78,8 +78,8 @@ export default function BookDetails() {
 		(book.library.progress > 0 || book.library.fileId !== book.files[0].id)
 
 	// List button.
-	function addBookToLibrary(bookId: number, list: LibraryLists) {
-		_addBookToLibrary(bookId, list)
+	async function addBookToLibrary(bookId: number, list: LibraryLists) {
+		await _addBookToLibrary(bookId, list)
 		mutate()
 	}
 

@@ -363,6 +363,7 @@ pub async fn set_book_list(
 
 // Update progress.
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateProgress {
     file_id: i64,
     progress: f64,
