@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react"
 import {
 	Alert,
 	Button,
@@ -7,15 +8,12 @@ import {
 	Image,
 	ListGroup,
 } from "react-bootstrap"
+import { TbPlayerPauseFilled, TbPlayerPlayFilled } from "react-icons/tb"
 import { useParams } from "wouter"
 
 import { bookCoverURL, useBook } from "../api/books"
-import type { BookDetails } from "../api/books"
-import {
-	LibraryLists,
-	LibraryListsSchema,
-	addBookToLibrary as _addBookToLibrary,
-} from "../api/library"
+import type { BookDetails, File } from "../api/books"
+import { LibraryListsSchema, addBookToLibrary } from "../api/library"
 import { capitalize, formatDuration, fromSnakeCase, useTitle } from "../common"
 import { useLocale } from "../locales"
 import { useStore } from "../store"
@@ -36,6 +34,17 @@ export default function BookDetails() {
 		translationData = { title: book.title, author: book.author }
 	}
 	useTitle(translationString, translationData)
+
+	// Scroll to currently playing file once on load.
+	const activeFileListItem = useRef<HTMLDivElement>(null)
+	useEffect(() => {
+		if (activeFileListItem.current) {
+			activeFileListItem.current.scrollIntoView({
+				behavior: "smooth",
+				block: "center",
+			})
+		}
+	}, [activeFileListItem, book?.id])
 
 	// Guards.
 	if (isLoading) {
@@ -58,19 +67,104 @@ export default function BookDetails() {
 		)
 	}
 
-	// List out the files.
-	const fileList = book.files.map(file => (
-		<ListGroup.Item key={file.id}>
-			<div className="ms-2 me-auto d-flex justify-content-between align-items-center">
-				<div>
-					<div className="fw-bold">{file.name}</div>
-					<div className="text-secondary">
-						Duration: {formatDuration(file.duration)}
+	// Function to play book.
+	async function playBook(file?: File) {
+		if (!book) {
+			return
+		}
+
+		// Create library entry if it doesn't exist.
+		let selectedBook: Required<BookDetails>
+		if (!book.library || (file && book.library.fileId !== file?.id)) {
+			await addBookToLibrary(
+				book.id,
+				// TODO: This should probably happen on the server.
+				book.library?.list ?? LibraryListsSchema.Values.listening,
+				file,
+			)
+			const updatedBook = await mutate(false)
+			if (!updatedBook || !updatedBook.success || !updatedBook.data.library) {
+				// This should never happen.
+				console.error(
+					"Book had no library data after adding to listening list.",
+				)
+				return
+			}
+			selectedBook = updatedBook.data as Required<BookDetails>
+		} else {
+			selectedBook = book as Required<BookDetails>
+		}
+
+		// Play the book.
+		state.playBook(selectedBook)
+	}
+
+	// Get library from either the selected book or the book we are viewing.
+	const library =
+		state.selectedBook?.id === book.id
+			? state.selectedBook.library
+			: book.library
+	const playingFileIndex = book.files.findIndex(
+		file => file.id === library?.fileId,
+	)
+	// List of files.
+	const fileList = book.files.map(file => {
+		const fileIndex = book.files.indexOf(file)
+		const progress =
+			library?.fileId === file.id
+				? (library.progress / file.duration) * 100
+				: fileIndex < playingFileIndex
+					? 100
+					: 0
+
+		const ref =
+			fileIndex === playingFileIndex ? { ref: activeFileListItem } : undefined
+		return (
+			<ListGroup.Item key={file.id} className="p-0">
+				<div
+					className="mx-3 my-2 me-auto d-flex justify-content-between align-items-center"
+					{...ref}
+				>
+					<div>
+						<div className="fw-bold">{file.name}</div>
+						<div className="text-secondary">
+							Duration: {formatDuration(file.duration)}
+						</div>
+					</div>
+					<div
+						className="player-control me-2"
+						role="button"
+						onClick={() => {
+							if (
+								fileIndex === playingFileIndex &&
+								state.selectedBook?.id === book.id
+							) {
+								state.togglePlay()
+							} else {
+								playBook(file)
+							}
+						}}
+					>
+						{state.playing &&
+						state.selectedBook &&
+						book?.id === state.selectedBook.id &&
+						fileIndex === playingFileIndex ? (
+							<TbPlayerPauseFilled />
+						) : (
+							<TbPlayerPlayFilled />
+						)}
 					</div>
 				</div>
-			</div>
-		</ListGroup.Item>
-	))
+				<div
+					style={{
+						height: "0.25em",
+						backgroundColor: "var(--bs-primary)",
+						width: `${progress}%`,
+					}}
+				></div>
+			</ListGroup.Item>
+		)
+	})
 
 	// User library data.
 	const hasListened =
@@ -78,11 +172,6 @@ export default function BookDetails() {
 		(book.library.progress > 0 || book.library.fileId !== book.files[0].id)
 
 	// List button.
-	async function addBookToLibrary(bookId: number, list: LibraryLists) {
-		await _addBookToLibrary(bookId, list)
-		mutate()
-	}
-
 	const listDropdown = Object.values(LibraryListsSchema.Values)
 		.filter(list => list !== book.library?.list)
 		.map(list => (
@@ -114,38 +203,6 @@ export default function BookDetails() {
 		</Button>
 	)
 
-	// Function for start listening button.
-	async function startListening() {
-		// Create library entry.
-		await addBookToLibrary(book!.id, LibraryListsSchema.Values.listening)
-
-		// Fetch the book again.
-		try {
-			const res = await mutate(false)
-
-			if (
-				res === undefined ||
-				res.success === false ||
-				res.data.library === undefined
-			) {
-				// This should never happen.
-				console.error(
-					"Book had no library data after adding to listening list.",
-					res,
-				)
-				return
-			}
-
-			// Play the book.
-			// Not sure why we to cast here, but Typescript complains about library being possibly
-			// undefined, even after we explicitly check for that in the if statement before.
-			state.playBook(res.data as Required<BookDetails>)
-		} catch (e) {
-			// TODO: Inform user that something broke.
-			console.error(e)
-		}
-	}
-
 	return (
 		<Container className="grid">
 			<div
@@ -164,7 +221,7 @@ export default function BookDetails() {
 					<h5 className="text-secondary">{book.author}</h5>
 				</div>
 				<div className="mt- d-flex gap-3">
-					<Button variant="primary" onClick={startListening}>
+					<Button variant="primary" onClick={() => playBook()}>
 						{t(
 							hasListened
 								? "book-details--continue-listening"

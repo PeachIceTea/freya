@@ -65,7 +65,10 @@ export const FileSchema = z.object({
 	created: z.string(), // ISO8601 date string
 	modified: z.string(), // ISO8601 date string
 })
+export type File = z.infer<typeof FileSchema>
+
 export const FilesSchema = z.array(FileSchema)
+export type Files = z.infer<typeof FilesSchema>
 
 export const BookDetailsSchema = BookSchema.and(
 	z.object({

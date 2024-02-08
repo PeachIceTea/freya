@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { ResponseSchema, post } from "./api"
+import { File } from "./books"
 
 export const LibraryListsSchema = z.enum([
 	"listening",
@@ -11,8 +12,12 @@ export const LibraryListsSchema = z.enum([
 export type LibraryLists = z.infer<typeof LibraryListsSchema>
 
 // Add a book to user's library.
-export const addBookToLibrary = async (bookId: number, list: LibraryLists) => {
-	const res = await post(`/book/${bookId}/library`, { list })
+export const addBookToLibrary = async (
+	bookId: number,
+	list: LibraryLists,
+	file?: File,
+) => {
+	const res = await post(`/book/${bookId}/library`, { list, fileId: file?.id })
 	return ResponseSchema.parse(res)
 }
 

@@ -32,6 +32,7 @@ type Actions = {
 	playBook: (book: Required<BookDetails>) => void
 	play(): void
 	pause(): void
+	togglePlay: () => void
 	nextFile: () => boolean
 	prevFile: () => boolean
 	setVolume: (volume: number) => void
@@ -79,6 +80,10 @@ export const useStore = create<State & Actions>()(
 		pause: () =>
 			set(state => {
 				state.playing = false
+			}),
+		togglePlay: () =>
+			set(state => {
+				state.playing = !state.playing
 			}),
 		nextFile: () => {
 			let result = false

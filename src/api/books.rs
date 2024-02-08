@@ -324,8 +324,10 @@ impl Display for LibraryLists {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SetBookList {
     list: LibraryLists,
+    file_id: Option<i64>,
 }
 
 // Move book into a library list.
@@ -333,26 +335,38 @@ pub async fn set_book_list(
     Session(session): Session,
     Path(book_id): Path<i64>,
     State(state): State<FreyaState>,
-    Json(SetBookList { list }): Json<SetBookList>,
+    Json(SetBookList { list, file_id }): Json<SetBookList>,
 ) -> ApiResult<SuccessResponse> {
     // Upsert a library entry.
     let list = list.to_string();
+
+    // Try to create a new library entry. If it already exists, update it.
+    // If file_id is None, the first file will be used.
+    // If the user already has a library entry for the book, the library entry will be updated.
+    // If the file_id is updated, the progress will be reset to 0.
     sqlx::query!(
         r#"
             INSERT INTO library_entries (user_id, book_id, file_id, list)
-            VALUES ($1, $2, (
+            VALUES ($1, $2, COALESCE($4, (
                 SELECT id
                 FROM files
                 WHERE book_id = $2
                 ORDER BY position ASC
                 LIMIT 1
-            ), $3)
+            )), $3)
             ON CONFLICT (user_id, book_id) DO UPDATE
-            SET list = $3, modified = CURRENT_TIMESTAMP
+            SET list = EXCLUDED.list,
+                file_id = COALESCE(EXCLUDED.file_id, library_entries.file_id),
+                progress = CASE
+                    WHEN library_entries.file_id != EXCLUDED.file_id THEN 0
+                    ELSE library_entries.progress
+                END,
+                modified = CURRENT_TIMESTAMP
         "#,
         session.user_id,
         book_id,
         list,
+        file_id,
     )
     .execute(&state.db)
     .await
