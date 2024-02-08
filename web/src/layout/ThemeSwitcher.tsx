@@ -43,7 +43,7 @@ export default function ThemeSwitcher() {
 			<NavDropdown.Divider />
 			<NavDropdown.Item
 				onClick={() => {
-					store.setTheme("system")
+					setTheme("system")
 				}}
 			>
 				<MdMonitor className="me-2" />
