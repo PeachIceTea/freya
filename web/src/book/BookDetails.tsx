@@ -132,7 +132,7 @@ export default function BookDetails() {
 						</div>
 					</div>
 					<div
-						className="player-control me-2"
+						className="details-control me-2"
 						role="button"
 						onClick={() => {
 							if (
@@ -219,7 +219,7 @@ export default function BookDetails() {
 					<h4>{book.title}</h4>
 					<h5 className="text-secondary">{book.author}</h5>
 				</div>
-				<div className="mt- d-flex gap-3">
+				<div className="d-flex gap-3">
 					<Button
 						variant="primary"
 						onClick={() => playBook()}

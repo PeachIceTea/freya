@@ -70,3 +70,20 @@ input[type="range"] {
 		color: #fff !important;
 	}
 }
+
+.details-control {
+	font-size: 2.5em;
+	color: #444 !important;
+
+	&:hover {
+		color: #000 !important;
+	}
+}
+
+[data-bs-theme="dark"] .details-control {
+	color: #ddd !important;
+
+	&:hover {
+		color: #fff !important;
+	}
+}
