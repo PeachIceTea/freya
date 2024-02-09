@@ -168,8 +168,7 @@ export default function BookDetails() {
 
 	// User library data.
 	const hasListened =
-		book.library &&
-		(book.library.progress > 0 || book.library.fileId !== book.files[0].id)
+		library && (library.progress > 0 || library.fileId !== book.files[0].id)
 
 	// List button.
 	const listDropdown = Object.values(LibraryListsSchema.Values)
@@ -221,11 +220,17 @@ export default function BookDetails() {
 					<h5 className="text-secondary">{book.author}</h5>
 				</div>
 				<div className="mt- d-flex gap-3">
-					<Button variant="primary" onClick={() => playBook()}>
+					<Button
+						variant="primary"
+						onClick={() => playBook()}
+						disabled={state.playing && state.selectedBook?.id === book.id}
+					>
 						{t(
-							hasListened
-								? "book-details--continue-listening"
-								: "book-details--start-listening",
+							state.playing && state.selectedBook?.id === book.id
+								? "book-details--is-playing"
+								: hasListened
+									? "book-details--continue-listening"
+									: "book-details--start-listening",
 						)}
 					</Button>
 					<Dropdown as={ButtonGroup}>

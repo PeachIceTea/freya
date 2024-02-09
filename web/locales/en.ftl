@@ -43,6 +43,7 @@ book-details--title = {$title} by {$author}
 book-details--title-placeholder = Book details
 book-details--start-listening = Start listening
 book-details--continue-listening = Continue listening
+book-details--is-playing = Playing
 book-details--add-to = Add to:
 book-details--is-in = Is in:
 
