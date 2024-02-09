@@ -1,6 +1,7 @@
 mod authentication;
 mod books;
 mod fs;
+mod user;
 
 use axum::{http::StatusCode, middleware, response::IntoResponse, routing::get, Json, Router};
 use serde::Serialize;
@@ -16,6 +17,7 @@ pub async fn build_router(state: FreyaState) -> Router {
         .merge(authentication::build_router())
         .nest("/book", books::router())
         .nest("/fs", fs::router())
+        .nest("/user", user::router())
         .route_layer(middleware::from_fn_with_state(state.clone(), get_session))
         .route_layer(CookieManagerLayer::new())
         .layer(TraceLayer::new_for_http())

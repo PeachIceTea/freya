@@ -74,16 +74,15 @@ export const SuccessResponseSchema = z.object({
 	value: z.string().optional(),
 })
 
+export const ResponseSchema = z.union([SuccessResponseSchema, ErrorSchema])
+export type Response = z.infer<typeof ResponseSchema>
+
 // Schema for a successful response from the API with data.
 export const SuccessDataResponseSchema = <T extends z.ZodTypeAny>(schema: T) =>
 	z.object({
 		success: z.literal(true),
 		data: schema,
 	})
-
-// Schema for a response from the API.
-export const ResponseSchema = z.union([SuccessResponseSchema, ErrorSchema])
-export type Response = z.infer<typeof ResponseSchema>
 
 // Schema for a response from the API with data.
 export const DataResponseSchema = <T extends z.ZodTypeAny>(schema: T) =>

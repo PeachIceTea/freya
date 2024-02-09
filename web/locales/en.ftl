@@ -4,6 +4,7 @@ server-connection-error = The API server couldn't be reached or returned an unex
 
 # General
 app--title = Freya
+date = { DATETIME($date, day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "numeric", timeZoneName: "short") }
 
 # Navbar
 navbar--login = Log in
@@ -93,4 +94,12 @@ player--volume = Volume
 player--playback-speed = Playback speed
 
 # User management
+user-management--id = ID
 user-management--title = User management
+user-management--name = Username
+user-management--admin = Admin
+user-management--created = Created at
+user-management--modified = Last modified
+user-management--actions = Actions
+user-management--show-profile = Show profile
+user-management--edit = Edit
