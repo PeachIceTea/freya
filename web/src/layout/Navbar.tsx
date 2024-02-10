@@ -1,6 +1,7 @@
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap"
+import { IoLibrarySharp } from "react-icons/io5"
 import { MdLogin, MdLogout } from "react-icons/md"
-import { TbBookUpload, TbUser, TbUserEdit } from "react-icons/tb"
+import { TbBook2, TbBookUpload, TbUser, TbUserEdit } from "react-icons/tb"
 import { Link } from "wouter"
 
 import { logout } from "../api/authentication"
@@ -39,6 +40,18 @@ export default function FreyaNavbar() {
 				<Navbar.Collapse id="navbar-nav" className="justify-content-end">
 					<Nav className="ml-auto">
 						<ThemeSwitcher />
+						{state.sessionInfo !== null && (
+							<>
+								<Link to="/library" className="nav-link">
+									<IoLibrarySharp className="me-2" />
+									{t("navbar--library")}
+								</Link>
+								<Link to="/book" className="nav-link">
+									<TbBook2 className="me-2" />
+									{t("navbar--books")}
+								</Link>
+							</>
+						)}
 						{state.sessionInfo?.admin && (
 							<NavDropdown title={t("navbar--admin")} align="end">
 								<NavDropdown.Item as={Link} to="/user-management">

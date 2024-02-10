@@ -10,11 +10,12 @@ import {
 	TbRewindBackward30,
 	TbRewindForward30,
 } from "react-icons/tb"
+import { mutate } from "swr"
 import { Link } from "wouter"
 
 import Select from "./Select"
 import { BookDetails, bookCoverURL } from "./api/books"
-import { updateProgress } from "./api/library"
+import { addBookToLibrary, updateProgress } from "./api/library"
 import { formatDuration, useIsMobile } from "./common"
 import { useLocale } from "./locales"
 import { useStore } from "./store"
@@ -167,7 +168,10 @@ function PlayerComponent({
 
 			// Listen for end of audio to automatically play next file.
 			const handleEnded = () => {
-				storeFn.nextFile()
+				if (!storeFn.nextFile()) {
+					addBookToLibrary(selectedBook.id, "finished")
+					mutate(`/book/${selectedBook.id}`)
+				}
 			}
 			ref.addEventListener("ended", handleEnded)
 
@@ -193,7 +197,7 @@ function PlayerComponent({
 				ref.removeEventListener("timeupdate", handleTimeUpdate)
 			}
 		}
-	}, [audioRef, file, storeFn])
+	}, [audioRef, file, storeFn, selectedBook.id])
 
 	// Update progress on the server every 30 seconds.
 	useEffect(() => {

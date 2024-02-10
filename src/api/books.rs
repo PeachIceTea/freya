@@ -328,6 +328,7 @@ impl Display for LibraryLists {
 pub struct SetBookList {
     list: LibraryLists,
     file_id: Option<i64>,
+    progress: Option<f64>,
 }
 
 // Move book into a library list.
@@ -335,7 +336,11 @@ pub async fn set_book_list(
     Session(session): Session,
     Path(book_id): Path<i64>,
     State(state): State<FreyaState>,
-    Json(SetBookList { list, file_id }): Json<SetBookList>,
+    Json(SetBookList {
+        list,
+        file_id,
+        progress,
+    }): Json<SetBookList>,
 ) -> ApiResult<SuccessResponse> {
     // Upsert a library entry.
     let list = list.to_string();
@@ -344,21 +349,22 @@ pub async fn set_book_list(
     // If file_id is None, the first file will be used.
     // If the user already has a library entry for the book, the library entry will be updated.
     // If the file_id is updated, the progress will be reset to 0.
-    sqlx::query!(
+    let error = sqlx::query!(
         r#"
-            INSERT INTO library_entries (user_id, book_id, file_id, list)
+            INSERT INTO library_entries (user_id, book_id, file_id, list, progress)
             VALUES ($1, $2, COALESCE($4, (
                 SELECT id
                 FROM files
                 WHERE book_id = $2
                 ORDER BY position ASC
                 LIMIT 1
-            )), $3)
+            )), $3, COALESCE($5, 0))
             ON CONFLICT (user_id, book_id) DO UPDATE
             SET list = EXCLUDED.list,
                 file_id = COALESCE(EXCLUDED.file_id, library_entries.file_id),
                 progress = CASE
                     WHEN library_entries.file_id != EXCLUDED.file_id THEN 0
+                    WHEN $5 IS NOT NULL THEN $5
                     ELSE library_entries.progress
                 END,
                 modified = CURRENT_TIMESTAMP
@@ -367,10 +373,14 @@ pub async fn set_book_list(
         book_id,
         list,
         file_id,
+        progress,
     )
     .execute(&state.db)
-    .await
-    .context("Failed to insert or update library entry")?;
+    .await;
+
+    tracing::error!(?error, "Upsert library entry");
+
+    error.context("Failed to insert or update library entry")?;
 
     api_response!("library--list-set")
 }

@@ -17,6 +17,8 @@ navbar--edit-profile = Edit profile
 navbar--admin = Administration
 navbar--new-book = Add book
 navbar--user-management = User management
+navbar--library = Library
+navbar--books = All books
 
 # Authentication
 server-authentication--already-logged-in = You are already logged in.
@@ -39,12 +41,14 @@ server-upload--invalid-file-path = The file "{$value}" was not found on the serv
 server-books--failed-to-get-cover-image = The server failed to get the cover image.
 
 books--title = All Books
+books--filter-library = Hide books already in your library
 
 # Book details
 book-details--title = {$title} by {$author}
 book-details--title-placeholder = Book details
 book-details--start-listening = Start listening
 book-details--continue-listening = Continue listening
+book-details--listen-again = Listen again
 book-details--is-playing = Playing
 book-details--add-to = Add to:
 book-details--is-in = Is in:

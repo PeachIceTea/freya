@@ -1,6 +1,7 @@
+import useSWR from "swr"
 import { z } from "zod"
 
-import { ResponseSchema, post } from "./api"
+import { DataResponseSchema, ResponseSchema, get, post } from "./api"
 import { File } from "./books"
 
 export const LibraryListsSchema = z.enum([
@@ -16,12 +17,17 @@ export const addBookToLibrary = async (
 	bookId: number,
 	list: LibraryLists,
 	file?: File,
+	progress?: number,
 ) => {
-	const res = await post(`/book/${bookId}/library`, { list, fileId: file?.id })
+	const res = await post(`/book/${bookId}/library`, {
+		list,
+		fileId: file?.id,
+		progress,
+	})
 	return ResponseSchema.parse(res)
 }
 
-export const LibraryEntry = z.object({
+export const LibraryEntrySchema = z.object({
 	id: z.number(),
 	fileId: z.number(),
 	progress: z.number(),
@@ -29,7 +35,7 @@ export const LibraryEntry = z.object({
 	created: z.string(), // ISO 8601 date string
 	modified: z.string(), // ISO 8601 date string
 })
-export type LibraryEntry = z.infer<typeof LibraryEntry>
+export type LibraryEntry = z.infer<typeof LibraryEntrySchema>
 
 // Update progress of a book in user's library.
 export const updateProgress = async (
@@ -39,4 +45,48 @@ export const updateProgress = async (
 ) => {
 	const res = await post(`/book/${bookId}/progress`, { fileId, progress })
 	return ResponseSchema.parse(res)
+}
+
+// Get user's library.
+export const LibrarySchema = z.array(
+	z.object({
+		id: z.number(),
+		title: z.string(),
+		author: z.string(),
+		list: LibraryListsSchema,
+		progress: z.number(),
+	}),
+)
+export type Library = z.infer<typeof LibrarySchema>
+
+export const LibraryResponseSchema = DataResponseSchema(LibrarySchema)
+
+export const getLibrary = async (id: number) => {
+	const res = await get(`/user/${id}/library`)
+	return LibraryResponseSchema.parse(res)
+}
+
+export const useLibrary = (id: number) => {
+	const {
+		data,
+		error: parseError,
+		isLoading,
+	} = useSWR(`/user/${id}/library`, () => getLibrary(id))
+
+	let error
+	if (parseError) {
+		console.error(parseError)
+		error = parseError
+	} else if (!data && !isLoading) {
+		error = parseError
+	}
+
+	let library
+	if (data?.success) {
+		library = data.data
+	} else {
+		error = data
+	}
+
+	return { library, error, isLoading }
 }

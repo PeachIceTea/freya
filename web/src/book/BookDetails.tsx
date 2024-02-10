@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react"
 import {
 	Alert,
 	Button,
@@ -37,17 +36,6 @@ function BookDetailsComponent({
 	}
 	useTitle(translationString, translationData)
 
-	// Scroll to currently playing file once on load.
-	const activeFileListItem = useRef<HTMLDivElement>(null)
-	useEffect(() => {
-		if (activeFileListItem.current) {
-			activeFileListItem.current.scrollIntoView({
-				behavior: "smooth",
-				block: "center",
-			})
-		}
-	}, [activeFileListItem, book?.id])
-
 	// Function to play book.
 	async function playBook(file?: File) {
 		if (!book) {
@@ -62,6 +50,23 @@ function BookDetailsComponent({
 				// TODO: This should probably happen on the server.
 				book.library?.list ?? LibraryListsSchema.Values.listening,
 				file,
+			)
+			const updatedBook = await mutate(false)
+			if (!updatedBook || !updatedBook.success || !updatedBook.data.library) {
+				// This should never happen.
+				console.error(
+					"Book had no library data after adding to listening list.",
+				)
+				return
+			}
+			selectedBook = updatedBook.data as Required<BookDetails>
+		} else if (library?.list === LibraryListsSchema.Values.finished) {
+			// If the book is finished, reset the progress and set it to listening.
+			await addBookToLibrary(
+				book.id,
+				LibraryListsSchema.Values.listening,
+				book.files[0],
+				0,
 			)
 			const updatedBook = await mutate(false)
 			if (!updatedBook || !updatedBook.success || !updatedBook.data.library) {
@@ -97,17 +102,11 @@ function BookDetailsComponent({
 				: fileIndex < playingFileIndex
 					? 100
 					: 0
-
-		const ref =
-			fileIndex === playingFileIndex ? { ref: activeFileListItem } : undefined
 		return (
 			<ListGroup.Item key={file.id} className="p-0">
-				<div
-					className="mx-3 my-2 me-auto d-flex justify-content-between align-items-center"
-					{...ref}
-				>
-					<div>
-						<div className="fw-bold">{file.name}</div>
+				<div className="mx-3 my-2 me-auto d-flex justify-content-between align-items-center">
+					<div className="flex-grow-1" style={{ minWidth: 0 }}>
+						<div className="fw-bold text-break">{file.name}</div>
 						<div className="text-secondary">
 							Duration: {formatDuration(file.duration)}
 						</div>
@@ -137,9 +136,9 @@ function BookDetailsComponent({
 					</div>
 				</div>
 				<div
+					className="bg-primary"
 					style={{
 						height: "0.25em",
-						backgroundColor: "var(--bs-primary)",
 						width: `${progress}%`,
 					}}
 				></div>
@@ -150,6 +149,8 @@ function BookDetailsComponent({
 	// User library data.
 	const hasListened =
 		library && (library.progress > 0 || library.fileId !== book.files[0].id)
+	const isFinished =
+		book.library && book.library.list === LibraryListsSchema.Values.finished
 
 	// List button.
 	const listDropdown = Object.values(LibraryListsSchema.Values)
@@ -209,9 +210,11 @@ function BookDetailsComponent({
 						{t(
 							state.playing && state.selectedBook?.id === book.id
 								? "book-details--is-playing"
-								: hasListened
-									? "book-details--continue-listening"
-									: "book-details--start-listening",
+								: isFinished
+									? "book-details--listen-again"
+									: hasListened
+										? "book-details--continue-listening"
+										: "book-details--start-listening",
 						)}
 					</Button>
 					<Dropdown as={ButtonGroup}>

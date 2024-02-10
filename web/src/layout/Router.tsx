@@ -2,14 +2,15 @@ import { Container } from "react-bootstrap"
 import { Redirect, Route, Switch, useLocation } from "wouter"
 
 import Login from "../Login"
-import UserManagement from "../UserManagement"
 import BookDetails from "../book/BookDetails"
 import Books from "../book/Books"
+import Library from "../book/Library"
 import NewBook from "../book/NewBook"
 import { useQuery } from "../common"
 import { useStore } from "../store"
 import NewUser from "../user/NewUser"
 import UserEdit from "../user/UserEdit"
+import UserManagement from "../user/UserManagement"
 
 export default function Router() {
 	const state = useStore()
@@ -29,7 +30,11 @@ export default function Router() {
 			) : (
 				<Switch>
 					<Route path="/">
-						<Redirect to="/book" />
+						<Redirect to="/library" replace={true} />
+					</Route>
+
+					<Route path="/library">
+						<Library />
 					</Route>
 
 					<Route path="/book">
@@ -91,5 +96,5 @@ function CatchUnauthorized() {
 function RedirectBack() {
 	const query = useQuery()
 	const from = query.get("from")
-	return <Redirect to={from || "/"} replace={true} />
+	return <Redirect to={from ?? "/"} replace={true} />
 }
