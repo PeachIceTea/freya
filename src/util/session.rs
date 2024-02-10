@@ -46,7 +46,7 @@ pub struct SessionInfo {
     #[serde(with = "time::serde::iso8601")]
     last_accessed: time::OffsetDateTime,
     username: String,
-    admin: bool,
+    pub admin: bool,
 }
 
 // Middleware function to insert SessionInfo into the request extensions.ü+üß

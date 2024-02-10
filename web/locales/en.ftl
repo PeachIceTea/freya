@@ -13,6 +13,8 @@ navbar--theme-dark = Dark
 navbar--theme-light = Light
 navbar--theme-system = System
 navbar--theme-active = Active
+navbar--edit-profile = Edit profile
+navbar--admin = Administration
 navbar--new-book = Add book
 navbar--user-management = User management
 
@@ -94,6 +96,15 @@ new-book--submit-button = Add book
 player--volume = Volume
 player--playback-speed = Playback speed
 
+# User edit
+user-edit--title = Edit user #{$id}
+user-edit--not-llowed = You are not allowed to edit other users.
+user-edit--name = Username
+user-edit--password = Password
+user-edit--password-confirm = Confirm password
+user-edit--admin = Admin
+user-edit--submit = Save
+
 # User management
 user-management--id = ID
 user-management--title = User management
@@ -104,3 +115,7 @@ user-management--modified = Last modified
 user-management--actions = Actions
 user-management--show-profile = Show profile
 user-management--edit = Edit
+user-management--new-user = Add new user
+
+# New user
+new-user--title = Add a new user

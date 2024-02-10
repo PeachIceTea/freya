@@ -24,7 +24,7 @@ const PlaybackSpeeds = [1, 1.25, 1.5, 1.75, 2] as const
 // We get the state of the store passed in to ensure that selectedBook and selectedBook.library
 // are not null. Otherwise we would have to check for null all over the place since React doesn't
 // allow us to return early from a component because of hooks.
-export default function Player({
+function PlayerComponent({
 	playing,
 	selectedBook,
 	volume,
@@ -413,5 +413,29 @@ export default function Player({
 				</div>
 			</div>
 		</div>
+	)
+}
+
+export default function Player() {
+	const { selectedBook, playing, volume, playbackSpeed } = useStore(
+		({ selectedBook, playing, volume, playbackSpeed }) => ({
+			selectedBook,
+			playing,
+			volume,
+			playbackSpeed,
+		}),
+	)
+
+	if (selectedBook === null) {
+		return null
+	}
+
+	return (
+		<PlayerComponent
+			playing={playing}
+			selectedBook={selectedBook}
+			volume={volume}
+			playbackSpeed={playbackSpeed}
+		/>
 	)
 }

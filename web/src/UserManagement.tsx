@@ -25,6 +25,9 @@ export default function UserManagement() {
 		<Container>
 			<div className="d-flex justify-content-between align-items-center">
 				<h1>{t("user-management--title")}</h1>
+				<Link to="/user/new" className="btn btn-primary">
+					{t("user-management--new-user")}
+				</Link>
 			</div>
 			<Table striped bordered hover>
 				<thead>

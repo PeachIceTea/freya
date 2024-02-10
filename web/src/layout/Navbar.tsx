@@ -1,9 +1,10 @@
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap"
 import { MdLogin, MdLogout } from "react-icons/md"
-import { TbBookUpload, TbUser } from "react-icons/tb"
+import { TbBookUpload, TbUser, TbUserEdit } from "react-icons/tb"
 import { Link } from "wouter"
 
 import { logout } from "../api/authentication"
+import { capitalize } from "../common"
 import { useLocale } from "../locales"
 import { useStore } from "../store"
 import ThemeSwitcher from "./ThemeSwitcher"
@@ -38,23 +39,38 @@ export default function FreyaNavbar() {
 				<Navbar.Collapse id="navbar-nav" className="justify-content-end">
 					<Nav className="ml-auto">
 						<ThemeSwitcher />
-						{state.sessionInfo === null ? (
-							<Link to="/login" className="nav-link">
-								<MdLogin />
-								{t("navbar--login")}
-							</Link>
-						) : (
-							<NavDropdown title={state.sessionInfo.username} align="end">
+						{state.sessionInfo?.admin && (
+							<NavDropdown title={t("navbar--admin")} align="end">
 								<NavDropdown.Item as={Link} to="/user-management">
-									<TbUser />
+									<TbUser className="me-2" />
 									{t("navbar--user-management")}
 								</NavDropdown.Item>
 								<NavDropdown.Item as={Link} to="/book/new">
-									<TbBookUpload /> {t("navbar--new-book")}
+									<TbBookUpload className="me-2" />
+									{t("navbar--new-book")}
+								</NavDropdown.Item>
+							</NavDropdown>
+						)}
+						{state.sessionInfo === null ? (
+							<Link to="/login" className="nav-link">
+								<MdLogin className="me-2" />
+								{t("navbar--login")}
+							</Link>
+						) : (
+							<NavDropdown
+								title={capitalize(state.sessionInfo.username)}
+								align="end"
+							>
+								<NavDropdown.Item
+									as={Link}
+									to={`/user/${state.sessionInfo.userId}/edit`}
+								>
+									<TbUserEdit className="me-2" />
+									{t("navbar--edit-profile")}
 								</NavDropdown.Item>
 								<NavDropdown.Divider />
 								<NavDropdown.Item onClick={handleLogout}>
-									<MdLogout />
+									<MdLogout className="me-2" />
 									{t("navbar--logout")}
 								</NavDropdown.Item>
 							</NavDropdown>

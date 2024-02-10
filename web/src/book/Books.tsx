@@ -1,4 +1,4 @@
-import { Card, Container } from "react-bootstrap"
+import { Alert, Card, Container } from "react-bootstrap"
 import { Link } from "wouter"
 
 import { bookCoverURL, useBooks } from "../api/books"
@@ -19,7 +19,7 @@ export default function Books() {
 		return (
 			<Container>
 				<h1>Books</h1>
-				<p>Error: {t(error.errorCode)}</p>
+				<Alert variant="danger">{t(error.errorCode)}</Alert>
 			</Container>
 		)
 	}
@@ -40,7 +40,7 @@ export default function Books() {
 	))
 
 	return (
-		<Container>
+		<Container className="mb-2">
 			<div className="d-flex justify-content-between align-items-center">
 				<h1>{t("books--title")}</h1>
 			</div>

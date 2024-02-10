@@ -1,3 +1,4 @@
+import { Container } from "react-bootstrap"
 import { Redirect, Route, Switch, useLocation } from "wouter"
 
 import Login from "../Login"
@@ -7,12 +8,14 @@ import Books from "../book/Books"
 import NewBook from "../book/NewBook"
 import { useQuery } from "../common"
 import { useStore } from "../store"
+import NewUser from "../user/NewUser"
+import UserEdit from "../user/UserEdit"
 
 export default function Router() {
 	const state = useStore()
 
 	return (
-		<main className="mb-2 overflow-auto h-100">
+		<main className="overflow-auto h-100">
 			{state.sessionInfo === null ? (
 				<Switch>
 					<Route path="/login">
@@ -33,25 +36,39 @@ export default function Router() {
 						<Books />
 					</Route>
 
-					<Route path="/book/new">
-						<NewBook />
-					</Route>
+					{state.sessionInfo.admin && (
+						<Route path="/book/new">
+							<NewBook />
+						</Route>
+					)}
 
 					<Route path="/book/:id">
 						<BookDetails />
 					</Route>
 
-					<Route path="/user-management">
-						<UserManagement />
+					{state.sessionInfo.admin && (
+						<Route path="/user-management">
+							<UserManagement />
+						</Route>
+					)}
+					{state.sessionInfo.admin && (
+						<Route path="/user/new">
+							<NewUser />
+						</Route>
+					)}
+
+					<Route path="/user/:id/edit">
+						<UserEdit />
 					</Route>
 
 					<Route path="/login">
 						<RedirectBack />
-						MUs
 					</Route>
 
 					<Route>
-						<h1>Not Found</h1>
+						<Container>
+							<h1>Not Found</h1>
+						</Container>
 					</Route>
 				</Switch>
 			)}

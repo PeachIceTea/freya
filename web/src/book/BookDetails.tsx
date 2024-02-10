@@ -12,19 +12,21 @@ import { TbPlayerPauseFilled, TbPlayerPlayFilled } from "react-icons/tb"
 import { useParams } from "wouter"
 
 import { bookCoverURL, useBook } from "../api/books"
-import type { BookDetails, File } from "../api/books"
+import type { BookDetails, BookDetailsResponse, File } from "../api/books"
 import { LibraryListsSchema, addBookToLibrary } from "../api/library"
 import { capitalize, formatDuration, fromSnakeCase, useTitle } from "../common"
 import { useLocale } from "../locales"
 import { useStore } from "../store"
 
-export default function BookDetails() {
+function BookDetailsComponent({
+	book,
+	mutate,
+}: {
+	book: BookDetails
+	mutate(shouldRevalidate?: boolean): Promise<BookDetailsResponse | undefined>
+}) {
 	const t = useLocale()
 	const state = useStore()
-
-	const { id } = useParams()
-
-	const { book, error, isLoading, mutate } = useBook(+id!)
 
 	// Setup page title.
 	let translationString = "book-details--title-placeholder"
@@ -45,27 +47,6 @@ export default function BookDetails() {
 			})
 		}
 	}, [activeFileListItem, book?.id])
-
-	// Guards.
-	if (isLoading) {
-		return null
-	}
-
-	if (error) {
-		return (
-			<Container>
-				<Alert variant="error">{error.errorCode}</Alert>
-			</Container>
-		)
-	}
-
-	if (!book) {
-		return (
-			<Container>
-				<Alert variant="error">Book not found</Alert>
-			</Container>
-		)
-	}
 
 	// Function to play book.
 	async function playBook(file?: File) {
@@ -203,7 +184,7 @@ export default function BookDetails() {
 	)
 
 	return (
-		<Container className="grid">
+		<Container className="grid mb-2">
 			<div
 				className="g-col-12 g-col-md-4 sticky-md-top"
 				style={{
@@ -245,4 +226,34 @@ export default function BookDetails() {
 			</div>
 		</Container>
 	)
+}
+
+export default function BookDetails() {
+	const t = useLocale()
+	const { id } = useParams()
+
+	const { book, error, isLoading, mutate } = useBook(+id!)
+
+	if (error) {
+		console.error(error)
+		return (
+			<Container>
+				<Alert variant="danger">{t(error.errorCode)}</Alert>
+			</Container>
+		)
+	}
+
+	if (isLoading) {
+		return null
+	}
+
+	if (!book) {
+		return (
+			<Container>
+				<Alert variant="danger">Book not found</Alert>
+			</Container>
+		)
+	}
+
+	return <BookDetailsComponent book={book} mutate={mutate} />
 }
