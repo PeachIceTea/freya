@@ -7,6 +7,7 @@ mod util;
 
 use axum::Router;
 use tokio::signal;
+#[cfg(profile = "release")]
 use tower_http::compression::CompressionLayer;
 use tracing_subscriber::prelude::*;
 
@@ -39,13 +40,12 @@ async fn main() {
     #[cfg(profile = "release")]
     let app = Router::new()
         .nest("/api", api::build_router(state).await)
-        .fallback(serve::serve_frontend);
+        .fallback(serve::serve_frontend)
+        .layer(CompressionLayer::new());
 
     // Build only the API in the debug profile.
     #[cfg(profile = "debug")]
-    let app = Router::new()
-        .nest("/api", api::build_router(state).await)
-        .layer(CompressionLayer::new());
+    let app = Router::new().nest("/api", api::build_router(state).await);
 
     // Get the port from the environment.
     // Default to 3000 if PORT is not set.

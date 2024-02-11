@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Alert, Button, Container, Form } from "react-bootstrap"
+import { Alert, Container } from "react-bootstrap"
 import { useLocation, useParams } from "wouter"
 
 import { User, updateUser, useUser } from "../api/user"
