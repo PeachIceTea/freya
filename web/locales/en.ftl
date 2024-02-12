@@ -123,3 +123,6 @@ user-management--new-user = Add new user
 
 # New user
 new-user--title = Add a new user
+
+# Library
+library--title = Library

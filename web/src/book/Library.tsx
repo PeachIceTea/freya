@@ -8,12 +8,15 @@ import {
 	LibraryListsSchema,
 	useLibrary,
 } from "../api/library"
-import { capitalize, fromSnakeCase } from "../common"
+import { capitalize, fromSnakeCase, useTitle } from "../common"
 import { useLocale } from "../locales"
 import { useStore } from "../store"
 import BookList from "./components/BookList"
 
 function LibraryComponent({ library }: { library: Library }) {
+	const t = useLocale()
+	useTitle("library--title")
+
 	const [listFilter, setListFilter] = useState<LibraryLists | null>("listening")
 	const [searchFilter, setSearchFilter] = useState<string | null>(null)
 
@@ -39,7 +42,7 @@ function LibraryComponent({ library }: { library: Library }) {
 	return (
 		<Container>
 			<div className="d-flex flex-column flex-md-row justify-content-between align-items-center">
-				<h1>Library</h1>
+				<h1>{t("library--title")}</h1>
 				<div className="d-flex flex-column flex-lg-row gap-2 mb-2">
 					<Form.Control
 						type="text"
