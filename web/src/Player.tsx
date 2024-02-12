@@ -228,6 +228,7 @@ function PlayerComponent({
 			audioRef.current.playbackRate = playbackSpeed
 		}
 	}, [playbackSpeed, audioRef, file])
+	const [isPlaybackSpeedOpen, setIsPlaybackSpeedOpen] = useState(false)
 
 	// Calculate progress.
 	const progress = (selectedBook.library.progress / file.duration) * 100
@@ -236,7 +237,6 @@ function PlayerComponent({
 		<div
 			className={classNames(
 				"text-white",
-				"z-3",
 				"user-select-none",
 				"rounded-top-3",
 				"d-flex",
@@ -375,7 +375,7 @@ function PlayerComponent({
 					"w-100",
 					{
 						"flex-column": !isMobile,
-						"overflow-hidden": isMobile,
+						"overflow-hidden": isMobile && !isPlaybackSpeedOpen,
 						"flex-shrink-1": !isMobile,
 					},
 				)}
@@ -412,6 +412,7 @@ function PlayerComponent({
 						onChange={value => {
 							storeFn.setPlaybackSpeed(value)
 						}}
+						onOpenChange={setIsPlaybackSpeedOpen}
 						data-bs-theme="dark"
 					/>
 				</div>

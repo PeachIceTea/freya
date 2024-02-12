@@ -15,13 +15,19 @@ export default function Select<T extends string | number>({
 	options,
 	value,
 	onChange,
+	onOpenChange,
 	...props
 }: {
 	options: SelectOption<T>[]
 	value: T
 	onChange: (value: T) => void
+	onOpenChange?: (isOpen: boolean) => void
 } & DivProps) {
-	const [open, setOpen] = useState(false)
+	const [open, _setOpen] = useState(false)
+	function setOpen(value: boolean) {
+		_setOpen(value)
+		onOpenChange?.(value)
+	}
 	const dropDownRef = useRef<HTMLDivElement>(null)
 
 	// Listen to click events everywhere in the document.
@@ -36,7 +42,7 @@ export default function Select<T extends string | number>({
 			}
 		}
 		document.addEventListener("click", handleClick)
-	}, [dropDownRef])
+	}, [dropDownRef, _setOpen])
 
 	return (
 		<div className="position-relative" ref={dropDownRef} {...props}>
