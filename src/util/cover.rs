@@ -1,6 +1,9 @@
+use std::time::Duration;
+
 use anyhow::{bail, Context, Result};
 use axum::body::Bytes;
 use axum_typed_multipart::FieldData;
+use tokio::time::timeout;
 
 use super::storage::TMP_PATH;
 
@@ -47,8 +50,9 @@ pub async fn get_cover_bytes(data: FieldData<Bytes>) -> Result<Vec<u8>> {
 
 async fn download_image(url: &str) -> Result<Vec<u8>> {
     // Send a GET request to the URL.
-    let response = reqwest::get(url)
+    let response = timeout(Duration::from_secs(30), reqwest::get(url))
         .await
+        .with_context(|| format!("Server did not respond within 30 seconds: {}", url))?
         .with_context(|| format!("Failed to send GET request to URL: {}", url))?;
 
     // Check if the response is successful.
