@@ -1,0 +1,8 @@
+CREATE TABLE chapters (
+    id INTEGER PRIMARY KEY NOT NULL,
+    book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+
+    name TEXT NOT NULL,
+    start REAL NOT NULL,
+    end REAL NOT NULL
+);

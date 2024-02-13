@@ -12,11 +12,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     api_bail, api_response, data_response,
-    models::{Book, File, LibraryEntry},
+    models::{Book, Chapter, File, LibraryEntry},
     state::FreyaState,
     util::{
         cover::get_cover_bytes,
-        ffmpeg::ffprobe_duration,
+        ffmpeg::{ffprobe_chapters, ffprobe_duration},
         response::{ApiError, ApiFileResult, ApiResult, DataResponse, SuccessResponse},
         session::{AdminSession, Session},
     },
@@ -65,6 +65,8 @@ pub struct BookResponse {
     files: Vec<File>,
     #[serde(skip_serializing_if = "Option::is_none")]
     library: Option<LibraryEntry>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    chapters: Vec<Chapter>,
 }
 
 pub async fn get_book_details(
@@ -112,6 +114,21 @@ pub async fn get_book_details(
     .await
     .context("Couldn't get files from database")?;
 
+    // Get chapters from the database.
+    let chapters = sqlx::query_as!(
+        Chapter,
+        r#"
+            SELECT *
+            FROM chapters
+            WHERE book_id = ?
+            ORDER BY start ASC
+        "#,
+        book_id
+    )
+    .fetch_all(&state.db)
+    .await
+    .context("Couldn't get chapters from database")?;
+
     // Get library entry from the database.
     let library = sqlx::query_as!(
         LibraryEntry,
@@ -131,7 +148,8 @@ pub async fn get_book_details(
     data_response!(BookResponse {
         book,
         files,
-        library
+        library,
+        chapters,
     })
 }
 
@@ -227,6 +245,16 @@ pub async fn upload_book(
         None
     };
 
+    // Extract chapters if only one file is uploaded.
+    // This is entirely optional and will not fail the upload if it fails.
+    let chapters = if files.len() == 1 {
+        let file = &files[0];
+        let chapters = ffprobe_chapters(file).await.ok();
+        chapters
+    } else {
+        None
+    };
+
     // Create FileData vector from files.
     let mut file_data = Vec::with_capacity(files.len());
     for path in files {
@@ -293,6 +321,25 @@ pub async fn upload_book(
         .execute(&mut *trx)
         .await
         .context("Failed to insert file into database")?;
+    }
+
+    // Insert chapters into the database.
+    if let Some(chapters) = chapters {
+        for chapter in chapters {
+            sqlx::query!(
+                r#"
+                    INSERT INTO chapters (book_id, name, start, end)
+                    VALUES (?, ?, ?, ?)
+                "#,
+                book_id,
+                chapter.name,
+                chapter.start,
+                chapter.end,
+            )
+            .execute(&mut *trx)
+            .await
+            .context("Failed to insert chapter into database")?;
+        }
     }
 
     // Commit transaction.

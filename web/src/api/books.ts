@@ -70,6 +70,16 @@ export type File = z.infer<typeof FileSchema>
 export const FilesSchema = z.array(FileSchema)
 export type Files = z.infer<typeof FilesSchema>
 
+export const ChapterSchema = z.object({
+	id: z.number().int(),
+	name: z.string(),
+	start: z.number(),
+	end: z.number(),
+})
+export type Chapter = z.infer<typeof ChapterSchema>
+
+export const ChaptersSchema = z.array(ChapterSchema)
+
 export const BookDetailsSchema = BookSchema.and(
 	z.object({
 		files: FilesSchema,
@@ -83,6 +93,11 @@ export const BookDetailsSchema = BookSchema.and(
 	.and(
 		z.object({
 			library: LibraryEntrySchema.optional(),
+		}),
+	)
+	.and(
+		z.object({
+			chapters: ChaptersSchema.optional(),
 		}),
 	)
 export type BookDetails = z.infer<typeof BookDetailsSchema>
@@ -117,7 +132,7 @@ export const useBook = (id: number) => {
 		error = data
 	}
 
-	function mutate(shouldRevalidate?: boolean) {
+	function mutate(shouldRevalidate = false) {
 		return _mutate(getBook(id), shouldRevalidate)
 	}
 

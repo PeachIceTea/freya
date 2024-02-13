@@ -62,6 +62,10 @@ export default function FreyaNavbar() {
 									<TbBookUpload className="me-2" />
 									{t("navbar--new-book")}
 								</NavDropdown.Item>
+								<NavDropdown.Divider />
+								<NavDropdown.Item as={Link} to="/admin">
+									Miscellaneous
+								</NavDropdown.Item>
 							</NavDropdown>
 						)}
 						{state.sessionInfo === null ? (

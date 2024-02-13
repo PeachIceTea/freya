@@ -86,3 +86,16 @@ pub struct LibraryEntry {
     #[serde(with = "time::serde::iso8601")]
     pub modified: OffsetDateTime,
 }
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Chapter {
+    pub id: i64,
+
+    #[serde(skip)]
+    pub book_id: i64,
+
+    pub name: String,
+    pub start: f64,
+    pub end: f64,
+}

@@ -30,11 +30,13 @@ function PlayerComponent({
 	selectedBook,
 	volume,
 	playbackSpeed,
+	forceSeek,
 }: {
 	playing: boolean
 	selectedBook: Required<BookDetails>
 	volume: number
 	playbackSpeed: number
+	forceSeek: boolean
 }) {
 	const t = useLocale()
 	const isMobile = useIsMobile()
@@ -56,6 +58,7 @@ function PlayerComponent({
 			updateProgress: state.updateProgress,
 			setVolume: state.setVolume,
 			setPlaybackSpeed: state.setPlaybackSpeed,
+			seekComplete: state.seekComplete,
 		}
 	})
 
@@ -70,6 +73,11 @@ function PlayerComponent({
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [audioRef, selectedBook.id])
+
+	if (forceSeek && audioRef.current) {
+		audioRef.current.currentTime = library.progress
+		storeFn.seekComplete()
+	}
 
 	// Audio control functions.
 	async function play() {
@@ -422,12 +430,13 @@ function PlayerComponent({
 }
 
 export default function Player() {
-	const { selectedBook, playing, volume, playbackSpeed } = useStore(
-		({ selectedBook, playing, volume, playbackSpeed }) => ({
+	const { selectedBook, playing, volume, playbackSpeed, forceSeek } = useStore(
+		({ selectedBook, playing, volume, playbackSpeed, forceSeek }) => ({
 			selectedBook,
 			playing,
 			volume,
 			playbackSpeed,
+			forceSeek,
 		}),
 	)
 
@@ -441,6 +450,7 @@ export default function Player() {
 			selectedBook={selectedBook}
 			volume={volume}
 			playbackSpeed={playbackSpeed}
+			forceSeek={forceSeek}
 		/>
 	)
 }

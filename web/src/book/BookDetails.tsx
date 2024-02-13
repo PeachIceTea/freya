@@ -1,3 +1,4 @@
+import { produce } from "immer"
 import {
 	Alert,
 	Button,
@@ -7,15 +8,20 @@ import {
 	Image,
 	ListGroup,
 } from "react-bootstrap"
-import { TbPlayerPauseFilled, TbPlayerPlayFilled } from "react-icons/tb"
 import { useParams } from "wouter"
 
 import { bookCoverURL, useBook } from "../api/books"
-import type { BookDetails, BookDetailsResponse, File } from "../api/books"
+import type {
+	BookDetails,
+	BookDetailsResponse,
+	Chapter,
+	File,
+} from "../api/books"
 import { LibraryListsSchema, addBookToLibrary } from "../api/library"
-import { capitalize, formatDuration, fromSnakeCase, useTitle } from "../common"
+import { capitalize, fromSnakeCase, useTitle } from "../common"
 import { useLocale } from "../locales"
 import { useStore } from "../store"
+import FileList from "./components/FileList"
 
 function BookDetailsComponent({
 	book,
@@ -37,52 +43,43 @@ function BookDetailsComponent({
 	useTitle(translationString, translationData)
 
 	// Function to play book.
-	async function playBook(file?: File) {
+	async function playBook(item?: File | Chapter) {
 		if (!book) {
 			return
 		}
 
-		// Create library entry if it doesn't exist.
-		let selectedBook: Required<BookDetails>
-		if (!book.library || (file && book.library.fileId !== file?.id)) {
-			await addBookToLibrary(
-				book.id,
-				// TODO: This should probably happen on the server.
-				book.library?.list ?? LibraryListsSchema.Values.listening,
-				file,
-			)
-			const updatedBook = await mutate(false)
-			if (!updatedBook || !updatedBook.success || !updatedBook.data.library) {
-				// This should never happen.
-				console.error(
-					"Book had no library data after adding to listening list.",
-				)
-				return
-			}
-			selectedBook = updatedBook.data as Required<BookDetails>
-		} else if (library?.list === LibraryListsSchema.Values.finished) {
-			// If the book is finished, reset the progress and set it to listening.
-			await addBookToLibrary(
-				book.id,
-				LibraryListsSchema.Values.listening,
-				book.files[0],
-				0,
-			)
-			const updatedBook = await mutate(false)
-			if (!updatedBook || !updatedBook.success || !updatedBook.data.library) {
-				// This should never happen.
-				console.error(
-					"Book had no library data after adding to listening list.",
-				)
-				return
-			}
-			selectedBook = updatedBook.data as Required<BookDetails>
+		let playableBook
+		if (item && "duration" in item) {
+			playableBook = await ensureBookIsPlayable(item)
 		} else {
-			selectedBook = book as Required<BookDetails>
+			playableBook = await ensureBookIsPlayable()
 		}
 
-		// Play the book.
-		state.playBook(selectedBook)
+		state.playBook(playableBook)
+		if (item && "start" in item) {
+			state.seekTo(item.start)
+		}
+	}
+
+	async function ensureBookIsPlayable(
+		file?: File,
+	): Promise<Required<BookDetails>> {
+		if (!book) {
+			throw new Error("Book not found")
+		}
+
+		if (book.library) {
+			return book as Required<BookDetails>
+		}
+
+		// Create library entry.
+		await addBookToLibrary(book.id, LibraryListsSchema.Values.listening, file)
+		const res = await mutate()
+		if (!res?.success || !res.data.library) {
+			throw new Error("Failed to create library entry")
+		}
+
+		return res.data as Required<BookDetails>
 	}
 
 	// Get library from either the selected book or the book we are viewing.
@@ -90,61 +87,6 @@ function BookDetailsComponent({
 		state.selectedBook?.id === book.id
 			? state.selectedBook.library
 			: book.library
-	const playingFileIndex = book.files.findIndex(
-		file => file.id === library?.fileId,
-	)
-	// List of files.
-	const fileList = book.files.map(file => {
-		const fileIndex = book.files.indexOf(file)
-		const progress =
-			library?.fileId === file.id
-				? (library.progress / file.duration) * 100
-				: fileIndex < playingFileIndex
-					? 100
-					: 0
-		return (
-			<ListGroup.Item key={file.id} className="p-0">
-				<div className="mx-3 my-2 me-auto d-flex justify-content-between align-items-center">
-					<div className="flex-grow-1" style={{ minWidth: 0 }}>
-						<div className="fw-bold text-break">{file.name}</div>
-						<div className="text-secondary">
-							Duration: {formatDuration(file.duration)}
-						</div>
-					</div>
-					<div
-						className="details-control me-2"
-						role="button"
-						onClick={() => {
-							if (
-								fileIndex === playingFileIndex &&
-								state.selectedBook?.id === book.id
-							) {
-								state.togglePlay()
-							} else {
-								playBook(file)
-							}
-						}}
-					>
-						{state.playing &&
-						state.selectedBook &&
-						book?.id === state.selectedBook.id &&
-						fileIndex === playingFileIndex ? (
-							<TbPlayerPauseFilled />
-						) : (
-							<TbPlayerPlayFilled />
-						)}
-					</div>
-				</div>
-				<div
-					className="bg-primary"
-					style={{
-						height: "0.25em",
-						width: `${progress}%`,
-					}}
-				></div>
-			</ListGroup.Item>
-		)
-	})
 
 	// User library data.
 	const hasListened =
@@ -225,7 +167,17 @@ function BookDetailsComponent({
 				</div>
 			</div>
 			<div className="g-col-12 g-col-md-8 mt-2">
-				<ListGroup className="shadow-sm">{fileList}</ListGroup>
+				<ListGroup className="shadow-sm">
+					<FileList
+						book={
+							book.id === state.selectedBook?.id ? state.selectedBook : book
+						}
+						currentlyPlaying={
+							book.id === state.selectedBook?.id && state.playing
+						}
+						onClick={playBook}
+					/>
+				</ListGroup>
 			</div>
 		</Container>
 	)

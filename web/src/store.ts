@@ -21,6 +21,7 @@ type State = {
 	playing: boolean
 	volume: number
 	playbackSpeed: number
+	forceSeek: boolean
 }
 
 type Actions = {
@@ -38,6 +39,8 @@ type Actions = {
 	setVolume: (volume: number) => void
 	setPlaybackSpeed: (speed: number) => void
 	updateProgress: (progress: number) => void
+	seekTo: (progress: number) => void
+	seekComplete: () => void
 }
 
 const initialState = (): State => ({
@@ -49,6 +52,7 @@ const initialState = (): State => ({
 	playing: false,
 	volume: getVolumeFromLocalStorage(),
 	playbackSpeed: getPlaybackSpeedFromLocalStorage(),
+	forceSeek: false,
 })
 
 export const useStore = create<State & Actions>()(
@@ -163,6 +167,20 @@ export const useStore = create<State & Actions>()(
 				}
 
 				state.selectedBook.library.progress = progress
+			}),
+		seekTo: (progress: number) =>
+			set(state => {
+				// Check if a book is selected.
+				if (!state.selectedBook) {
+					return
+				}
+
+				state.selectedBook.library.progress = progress
+				state.forceSeek = true
+			}),
+		seekComplete: () =>
+			set(state => {
+				state.forceSeek = false
 			}),
 	})),
 )

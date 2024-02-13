@@ -1,6 +1,7 @@
 import { Container } from "react-bootstrap"
 import { Redirect, Route, Switch, useLocation } from "wouter"
 
+import AdminPage from "../Admin"
 import Login from "../Login"
 import BookDetails from "../book/BookDetails"
 import Books from "../book/Books"
@@ -59,6 +60,11 @@ export default function Router() {
 					{state.sessionInfo.admin && (
 						<Route path="/user/new">
 							<NewUser />
+						</Route>
+					)}
+					{state.sessionInfo.admin && (
+						<Route path="/admin">
+							<AdminPage />
 						</Route>
 					)}
 

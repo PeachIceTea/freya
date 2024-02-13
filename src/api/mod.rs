@@ -1,3 +1,4 @@
+mod admin;
 mod authentication;
 mod books;
 mod fs;
@@ -18,6 +19,7 @@ pub async fn build_router(state: FreyaState) -> Router {
         .nest("/book", books::router())
         .nest("/fs", fs::router())
         .nest("/user", user::router())
+        .nest("/admin", admin::router())
         .route_layer(middleware::from_fn_with_state(state.clone(), get_session))
         .route_layer(CookieManagerLayer::new())
         .layer(TraceLayer::new_for_http())

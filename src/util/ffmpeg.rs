@@ -160,3 +160,71 @@ pub async fn ffprobe_duration(path: &str) -> Result<f64> {
                 .context("Failed to parse duration")
         })
 }
+#[derive(Deserialize)]
+struct FFProbeChaptersOutput {
+    chapters: Option<Vec<FFProbeChapter>>,
+}
+
+#[derive(Deserialize)]
+struct FFProbeChapter {
+    id: i64,
+    start_time: String,
+    end_time: String,
+    tags: Option<HashMap<String, String>>,
+}
+
+pub struct Chapters {
+    pub name: String,
+    pub start: f64,
+    pub end: f64,
+}
+
+pub async fn ffprobe_chapters(path: &str) -> Result<Vec<Chapters>> {
+    // ffprobe -i ${filePath} -v quiet -print_format json -show_chapters
+    let output = tokio::process::Command::new("ffprobe")
+        .arg("-i")
+        .arg(&path)
+        .arg("-v")
+        .arg("quiet")
+        .arg("-print_format")
+        .arg("json")
+        .arg("-show_chapters")
+        .output()
+        .await?;
+
+    if !output.status.success() {
+        bail!("ffprobe failed: {:?}", output.stderr);
+    }
+
+    let output_string =
+        String::from_utf8(output.stdout).context("couldn't parse ffprobe output")?;
+    let output: FFProbeChaptersOutput = serde_json::from_str(&output_string)?;
+    let chapters = output
+        .chapters
+        .context("ffprobe output does not contain chapters")?;
+
+    chapters
+        .iter()
+        .map(|ff_chapter| {
+            let start_time = ff_chapter
+                .start_time
+                .parse::<f64>()
+                .context("Failed to parse start time")?;
+            let end_time = ff_chapter
+                .end_time
+                .parse::<f64>()
+                .context("Failed to parse end time")?;
+            let name = ff_chapter
+                .tags
+                .as_ref()
+                .and_then(|tags| tags.get("title"))
+                .unwrap_or(&format!("Chapter {}", ff_chapter.id))
+                .to_string();
+            Ok(Chapters {
+                name,
+                start: start_time,
+                end: end_time,
+            })
+        })
+        .collect::<Result<Vec<Chapters>>>()
+}
