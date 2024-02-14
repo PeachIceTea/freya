@@ -40,8 +40,7 @@ async fn main() {
     #[cfg(profile = "release")]
     let app = Router::new()
         .nest("/api", api::build_router(state).await)
-        .fallback(serve::serve_frontend)
-        .layer(CompressionLayer::new());
+        .fallback(serve::serve_frontend);
 
     // Build only the API in the debug profile.
     #[cfg(profile = "debug")]
