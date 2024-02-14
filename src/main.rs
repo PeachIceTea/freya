@@ -7,8 +7,6 @@ mod util;
 
 use axum::Router;
 use tokio::signal;
-#[cfg(profile = "release")]
-use tower_http::compression::CompressionLayer;
 use tracing_subscriber::prelude::*;
 
 use crate::util::storage::TMP_PATH;
