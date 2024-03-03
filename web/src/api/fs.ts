@@ -33,6 +33,7 @@ export type EntriesResponse = z.infer<typeof EntriesResponseSchema>
 export const getDirectoryEntries = async (
 	path: string,
 ): Promise<EntriesResponse> => {
+	path = encodeURIComponent(path)
 	const res = await get(`/fs?path=${path}`)
 	return EntriesResponseSchema.parse(res)
 }
@@ -78,6 +79,7 @@ export const FileInfoResponseSchema = DataResponseSchema(
 )
 
 export const getFileInfo = async (path: string) => {
+	path = encodeURIComponent(path)
 	const res = await get(`/fs/info?path=${path}`)
 	return FileInfoResponseSchema.parse(res)
 }
