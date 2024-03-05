@@ -3,6 +3,16 @@
 A server to easily host and listen to audiobooks.
 
 There is a good chance you would be more happy with [Audiobookshelf](https://github.com/advplyr/audiobookshelf).
+Freya is much more limited in scope and relies heavily on the browser to provide the necessary
+codecs and features to play audio. Audiobookshelf is a much more complete solution and is much more
+likely to be what you are looking for.
+
+## Features
+
+- Web interface to listen to audiobooks
+  - Doesn't provide a way to get audiobooks onto the server
+- Keeps track of the last played position
+- Multiple users
 
 ## Build
 
@@ -47,3 +57,7 @@ environment variables manually.
 
 3. Then simply run the binary you built. The frontend is bundled into the binary and will be served
    unless the client hits an API endpoint.
+
+## License
+
+Freya is licensed under the [ISC License](./LICENSE).
