@@ -8,7 +8,7 @@ pub const AUDIO_EXTENSIONS: [&str; 7] = ["mp3", "flac", "wav", "ogg", "m4a", "m4
 pub const IMAGE_EXTENSIONS: [&str; 4] = ["jpg", "jpeg", "png", "webp"];
 
 // Categories of files we care about.
-#[derive(PartialEq, Serialize)]
+#[derive(PartialEq, Serialize, Debug)]
 #[serde(rename_all = "lowercase")]
 pub enum FileCategory {
     Directory,
@@ -93,4 +93,68 @@ pub async fn get_file_system_list(path: &str) -> Result<Vec<Entry>, io::Error> {
     });
 
     Ok(entries)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+    use tokio::fs;
+
+    #[tokio::test]
+    async fn test_get_file_system_list() {
+        //// Setup
+        // Create a temporary directory for testing
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_dir_path = temp_dir.path().to_str().unwrap();
+
+        // Create an audio file in the temporary directory
+        let file_path = Path::new(temp_dir_path).join("3.mp3");
+        fs::write(&file_path, b"").await.unwrap();
+
+        // Create an image file in the temporary directory
+        let image_file_path = Path::new(temp_dir_path).join("2.png");
+        fs::write(&image_file_path, b"").await.unwrap();
+
+        // Create a directory in the temporary directory
+        let dir_path = Path::new(temp_dir_path).join("test_dir");
+        fs::create_dir(&dir_path).await.unwrap();
+
+        // Create a miscellaneous file in the temporary directory
+        let misc_file_path = Path::new(temp_dir_path).join("1.txt");
+        fs::write(&misc_file_path, b"").await.unwrap();
+
+        // Create a hidden file in the temporary directory
+        let hidden_file_path = Path::new(temp_dir_path).join(".hidden");
+        fs::write(&hidden_file_path, b"").await.unwrap();
+
+        //// Execution
+        // Call the function with the path of the temporary directory
+        let result = get_file_system_list(temp_dir_path).await.unwrap();
+
+        //// Verification
+
+        // Should only return 4 entries
+        assert_eq!(result.len(), 4);
+
+        // The first entry should be the directory
+        assert_eq!(result[0].name, "test_dir");
+        assert_eq!(result[0].category, FileCategory::Directory);
+        assert_eq!(result[0].path, format!("{}/test_dir", temp_dir_path));
+
+        // The second entry should be 1.txt based on the alphabetical order
+        assert_eq!(result[1].name, "1.txt");
+        assert_eq!(result[1].category, FileCategory::File);
+        assert_eq!(result[1].path, misc_file_path.to_str().unwrap());
+
+        // The third entry should be 2.png based on the alphabetical order
+        assert_eq!(result[2].name, "2.png");
+        assert_eq!(result[2].category, FileCategory::Image);
+        assert_eq!(result[2].path, image_file_path.to_str().unwrap());
+
+        // The fourth entry should be 3.mp3 based on the alphabetical order
+        assert_eq!(result[3].name, "3.mp3");
+        assert_eq!(result[3].category, FileCategory::Audio);
+        assert_eq!(result[3].path, file_path.to_str().unwrap());
+    }
 }
