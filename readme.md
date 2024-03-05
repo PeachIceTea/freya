@@ -1,5 +1,7 @@
 # Freya - Audiobook server
 
+![Book details view of in the Freya web frontend](./freya.webp)
+
 A server to easily host and listen to audiobooks.
 
 There is a good chance you would be more happy with [Audiobookshelf](https://github.com/advplyr/audiobookshelf).
@@ -13,6 +15,8 @@ likely to be what you are looking for.
   - Doesn't provide a way to get audiobooks onto the server
 - Keeps track of the last played position
 - Multiple users
+- Dark mode
+- Mobile friendly-ish (not a PWA, minimal Safari support)
 
 ## Build
 
