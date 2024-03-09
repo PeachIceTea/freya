@@ -95,10 +95,13 @@ function PlayerComponent({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [audioRef, selectedBook.id])
 
-	if (forceSeek && audioRef.current) {
-		audioRef.current.currentTime = library.progress
-		storeFn.seekComplete()
-	}
+	// Seek to the correct position when forceSeek is true.
+	useEffect(() => {
+		if (forceSeek && audioRef.current) {
+			audioRef.current.currentTime = library.progress
+			storeFn.seekComplete()
+		}
+	}, [forceSeek, audioRef, library.progress, storeFn])
 
 	// Audio control functions.
 	async function play() {
