@@ -308,7 +308,10 @@ function PlayerComponent({
 						<MdMenu className="player-control opacity-0" />
 					</div>
 					<TbPlayerSkipBackFilled
-						className="player-control"
+						className={classNames({
+							"player-control": true,
+							"d-none": selectedBook.files.length === 1,
+						})}
 						role="button"
 						onClick={() => {
 							storeFn.prevFile()
@@ -350,7 +353,10 @@ function PlayerComponent({
 						}}
 					/>
 					<TbPlayerSkipForwardFilled
-						className="player-control"
+						className={classNames({
+							"player-control": true,
+							"d-none": selectedBook.files.length === 1,
+						})}
 						role="button"
 						onClick={() => {
 							storeFn.nextFile()
