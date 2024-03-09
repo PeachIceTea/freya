@@ -65,6 +65,27 @@ function PlayerComponent({
 	// Create a reference to the audio element.
 	const audioRef = useRef<HTMLAudioElement>(null)
 
+	// Check if we are using file or chapter mode.
+	const chapterMode = selectedBook.chapters.length > 0
+	const chapter =
+		audioRef.current && selectedBook.chapters.length > 0
+			? selectedBook.chapters.find(
+					chapter =>
+						audioRef.current!.currentTime > chapter.start &&
+						audioRef.current!.currentTime < chapter.end,
+				)
+			: undefined
+	const audioDuration = chapterMode
+		? chapter
+			? chapter.end - chapter.start
+			: 0
+		: file.duration
+	const audioCurrentTime = chapterMode
+		? chapter
+			? audioRef.current!.currentTime - chapter.start
+			: 0
+		: audioRef.current?.currentTime ?? 0
+
 	// Set audioRef to progress whenever a new book is selected.
 	useEffect(() => {
 		if (audioRef.current) {
@@ -85,11 +106,13 @@ function PlayerComponent({
 			await audioRef.current.play()
 		}
 	}
+
 	async function pause() {
 		if (audioRef.current) {
 			await audioRef.current.pause()
 		}
 	}
+
 	async function togglePlay() {
 		if (audioRef.current) {
 			if (audioRef.current.paused) {
@@ -99,19 +122,41 @@ function PlayerComponent({
 			}
 		}
 	}
+
 	function rewind30Seconds() {
 		if (audioRef.current) {
 			audioRef.current.currentTime -= 30
 		}
 	}
+
 	function forward30Seconds() {
 		if (audioRef.current) {
 			audioRef.current.currentTime += 30
 		}
 	}
-	function seek(to: number) {
+
+	function skipBackwards() {
+		if (chapter) {
+			const previousChapter =
+				selectedBook.chapters[selectedBook.chapters.indexOf(chapter) - 1]
+			seek(previousChapter.start, true)
+		} else {
+			storeFn.prevFile()
+		}
+	}
+
+	function skipForwards() {
+		if (chapter) {
+			seek(chapter.end + 1, true)
+		} else {
+			storeFn.nextFile()
+		}
+	}
+
+	function seek(to: number, absolute = false) {
 		if (audioRef.current) {
-			audioRef.current.currentTime = to
+			audioRef.current.currentTime =
+				chapter && !absolute ? to + chapter.start : to
 		}
 	}
 
@@ -239,7 +284,7 @@ function PlayerComponent({
 	const [isPlaybackSpeedOpen, setIsPlaybackSpeedOpen] = useState(false)
 
 	// Calculate progress.
-	const progress = (selectedBook.library.progress / file.duration) * 100
+	const progress = (audioCurrentTime / audioDuration) * 100
 
 	return (
 		<div
@@ -280,17 +325,12 @@ function PlayerComponent({
 			</div>
 			<div className="d-flex flex-column justify-content-center mx-5 w-100 px-2">
 				<div className="d-flex justify-content-between my-3">
-					<span>
-						{formatDuration(
-							audioRef.current?.currentTime,
-							audioRef.current?.duration,
-						)}
-					</span>
+					<span>{formatDuration(audioCurrentTime, audioDuration)}</span>
 					<input
 						type="range"
 						min="0"
-						max={audioRef.current?.duration || 0}
-						value={audioRef.current?.currentTime || 0}
+						max={audioDuration || 0}
+						value={audioCurrentTime || 0}
 						step={0.1}
 						className="progress-bar mt-2 mx-3"
 						style={{
@@ -300,7 +340,7 @@ function PlayerComponent({
 							seek(parseFloat(event.target.value))
 						}}
 					/>
-					<span>{formatDuration(audioRef.current?.duration)}</span>
+					<span>{formatDuration(audioDuration)}</span>
 				</div>
 				<div className="d-flex justify-content-between mb-2">
 					{/* Mirror menu button on the left to center the controls */}
@@ -310,21 +350,15 @@ function PlayerComponent({
 					<TbPlayerSkipBackFilled
 						className={classNames({
 							"player-control": true,
-							"d-none": selectedBook.files.length === 1,
+							"d-none": selectedBook.files.length === 1 && !chapterMode,
 						})}
 						role="button"
-						onClick={() => {
-							storeFn.prevFile()
-						}}
+						onClick={skipBackwards}
 					/>
 					<TbRewindBackward30
 						className="player-control"
 						role="button"
-						onClick={() => {
-							if (audioRef.current) {
-								audioRef.current.currentTime -= 30
-							}
-						}}
+						onClick={rewind30Seconds}
 					/>
 					{playing ? (
 						<TbPlayerPauseFilled
@@ -346,21 +380,15 @@ function PlayerComponent({
 					<TbRewindForward30
 						className="player-control"
 						role="button"
-						onClick={() => {
-							if (audioRef.current) {
-								audioRef.current.currentTime += 30
-							}
-						}}
+						onClick={forward30Seconds}
 					/>
 					<TbPlayerSkipForwardFilled
 						className={classNames({
 							"player-control": true,
-							"d-none": selectedBook.files.length === 1,
+							"d-none": selectedBook.files.length === 1 && !chapterMode,
 						})}
 						role="button"
-						onClick={() => {
-							storeFn.nextFile()
-						}}
+						onClick={skipForwards}
 					/>
 					<div
 						className={classNames(
