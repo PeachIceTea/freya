@@ -14,7 +14,7 @@ import { mutate } from "swr"
 import { Link } from "wouter"
 
 import Select from "./Select"
-import { BookDetails, BookDetailsWithLibrary, bookCoverURL } from "./api/books"
+import { BookDetailsWithLibrary, bookCoverURL } from "./api/books"
 import { addBookToLibrary, updateProgress } from "./api/library"
 import { formatDuration, useIsMobile } from "./common"
 import { useLocale } from "./locales"

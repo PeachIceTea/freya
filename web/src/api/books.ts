@@ -7,7 +7,7 @@ import {
 	get,
 	postMultipart,
 } from "./api"
-import { LibraryEntry, LibraryEntrySchema } from "./library"
+import { LibraryEntrySchema } from "./library"
 
 // Schema of book in the database.
 export const BookSchema = z.object({
