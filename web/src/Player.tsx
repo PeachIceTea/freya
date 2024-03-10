@@ -14,7 +14,7 @@ import { mutate } from "swr"
 import { Link } from "wouter"
 
 import Select from "./Select"
-import { BookDetails, bookCoverURL } from "./api/books"
+import { BookDetails, BookDetailsWithLibrary, bookCoverURL } from "./api/books"
 import { addBookToLibrary, updateProgress } from "./api/library"
 import { formatDuration, useIsMobile } from "./common"
 import { useLocale } from "./locales"
@@ -33,7 +33,7 @@ function PlayerComponent({
 	forceSeek,
 }: {
 	playing: boolean
-	selectedBook: Required<BookDetails>
+	selectedBook: BookDetailsWithLibrary
 	volume: number
 	playbackSpeed: number
 	forceSeek: boolean
@@ -66,9 +66,11 @@ function PlayerComponent({
 	const audioRef = useRef<HTMLAudioElement>(null)
 
 	// Check if we are using file or chapter mode.
-	const chapterMode = selectedBook.chapters.length > 0
+	const chapterMode = selectedBook.chapters && selectedBook.chapters.length > 0
 	const chapter =
-		audioRef.current && selectedBook.chapters.length > 0
+		audioRef.current &&
+		selectedBook.chapters &&
+		selectedBook.chapters.length > 0
 			? selectedBook.chapters.find(
 					chapter =>
 						audioRef.current!.currentTime > chapter.start &&
@@ -141,7 +143,7 @@ function PlayerComponent({
 	function skipBackwards() {
 		if (chapter) {
 			const previousChapter =
-				selectedBook.chapters[selectedBook.chapters.indexOf(chapter) - 1]
+				selectedBook.chapters![selectedBook.chapters!.indexOf(chapter) - 1]
 			seek(previousChapter.start, true)
 		} else {
 			storeFn.prevFile()

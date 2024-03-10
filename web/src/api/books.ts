@@ -7,7 +7,7 @@ import {
 	get,
 	postMultipart,
 } from "./api"
-import { LibraryEntrySchema } from "./library"
+import { LibraryEntry, LibraryEntrySchema } from "./library"
 
 // Schema of book in the database.
 export const BookSchema = z.object({
@@ -100,7 +100,15 @@ export const BookDetailsSchema = BookSchema.and(
 			chapters: ChaptersSchema.optional(),
 		}),
 	)
+export const BookDetailsWithLibrarySchema = BookDetailsSchema.and(
+	z.object({
+		library: LibraryEntrySchema,
+	}),
+)
 export type BookDetails = z.infer<typeof BookDetailsSchema>
+export type BookDetailsWithLibrary = z.infer<
+	typeof BookDetailsWithLibrarySchema
+>
 export const BookDetailsResponseSchema = DataResponseSchema(BookDetailsSchema)
 export type BookDetailsResponse = z.infer<typeof BookDetailsResponseSchema>
 
