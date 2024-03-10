@@ -36,6 +36,19 @@ pub static SESSION_LIFETIME: once_cell::sync::Lazy<time::Duration> =
         }
     });
 
+// Cookie secure flag.
+// Read COOKIE_ONLY_OVER_HTTPS from environment variable using a lazy once_cell.
+// Default to false.
+pub static COOKIE_ONLY_OVER_HTTPS: once_cell::sync::Lazy<bool> = once_cell::sync::Lazy::new(|| {
+    if let Ok(cookie_only_over_https) = std::env::var("COOKIE_ONLY_OVER_HTTPS") {
+        cookie_only_over_https
+            .parse()
+            .expect("COOKIE_ONLY_OVER_HTTPS should be a boolean")
+    } else {
+        false
+    }
+});
+
 // Extract the session from the request.
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -205,7 +218,8 @@ pub fn create_session_cookie<'a>(session_id: &str, last_accessed: OffsetDateTime
     Cookie::build((SESSION_COOKIE_NAME, session_id.to_string()))
         .path("/")
         .http_only(true)
-        .same_site(SameSite::Strict)
+        .secure(*COOKIE_ONLY_OVER_HTTPS)
+        .same_site(SameSite::Lax)
         .expires(last_accessed + *SESSION_LIFETIME)
         .build()
 }
