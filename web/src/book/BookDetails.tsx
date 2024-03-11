@@ -16,7 +16,11 @@ import type {
 	Chapter,
 	File,
 } from "../api/books"
-import { LibraryListsSchema, addBookToLibrary } from "../api/library"
+import {
+	LibraryLists,
+	LibraryListsSchema,
+	addBookToLibrary as _addBookToLibrary,
+} from "../api/library"
 import { capitalize, fromSnakeCase, useTitle } from "../common"
 import { useLocale } from "../locales"
 import { useStore } from "../store"
@@ -41,6 +45,18 @@ function BookDetailsComponent({
 	}
 	useTitle(translationString, translationData)
 
+	// Get library from either the selected book or the book we are viewing.
+	const library =
+		state.selectedBook?.id === book.id
+			? state.selectedBook.library
+			: book.library
+
+	// User library data.
+	const hasListened =
+		library && (library.progress > 0 || library.fileId !== book.files[0].id)
+	const isFinished =
+		book.library && book.library.list === LibraryListsSchema.Values.finished
+
 	// Function to play book.
 	async function playBook(item?: File | Chapter) {
 		if (!book) {
@@ -51,6 +67,16 @@ function BookDetailsComponent({
 		if (item && "duration" in item) {
 			playableBook = await ensureBookIsPlayable(item)
 		} else {
+			// Reset progress and put book in listening list if it's finished.
+			if (book.library?.list === LibraryListsSchema.Values.finished) {
+				await _addBookToLibrary(
+					book.id,
+					LibraryListsSchema.Values.listening,
+					book.files[0],
+				)
+				await mutate(true)
+			}
+
 			playableBook = await ensureBookIsPlayable()
 		}
 
@@ -58,6 +84,11 @@ function BookDetailsComponent({
 		if (item && "start" in item) {
 			state.seekTo(item.start)
 		}
+	}
+
+	async function addBookToLibrary(library: LibraryLists, file?: File) {
+		await _addBookToLibrary(book.id, library, file)
+		await mutate(true)
 	}
 
 	async function ensureBookIsPlayable(
@@ -72,8 +103,8 @@ function BookDetailsComponent({
 		}
 
 		// Create library entry.
-		await addBookToLibrary(book.id, LibraryListsSchema.Values.listening, file)
-		const res = await mutate()
+		await addBookToLibrary(LibraryListsSchema.Values.listening, file)
+		const res = await mutate(true)
 		if (!res?.success || !res.data.library) {
 			throw new Error("Failed to create library entry")
 		}
@@ -81,23 +112,11 @@ function BookDetailsComponent({
 		return res.data as Required<BookDetails>
 	}
 
-	// Get library from either the selected book or the book we are viewing.
-	const library =
-		state.selectedBook?.id === book.id
-			? state.selectedBook.library
-			: book.library
-
-	// User library data.
-	const hasListened =
-		library && (library.progress > 0 || library.fileId !== book.files[0].id)
-	const isFinished =
-		book.library && book.library.list === LibraryListsSchema.Values.finished
-
 	// List button.
 	const listDropdown = Object.values(LibraryListsSchema.Values)
 		.filter(list => list !== book.library?.list)
 		.map(list => (
-			<Dropdown.Item key={list} onClick={() => addBookToLibrary(book.id, list)}>
+			<Dropdown.Item key={list} onClick={() => addBookToLibrary(list)}>
 				{t("book-details--add-to")}{" "}
 				<span className="fst-italic">{capitalize(fromSnakeCase(list))}</span>
 			</Dropdown.Item>
@@ -106,10 +125,10 @@ function BookDetailsComponent({
 	const listButton = (
 		<Button
 			variant="success"
-			onClick={() =>
+			onClick={async () => {
 				!book.library?.list &&
-				addBookToLibrary(book.id, LibraryListsSchema.Values.want_to_listen)
-			}
+					(await addBookToLibrary(LibraryListsSchema.Values.want_to_listen))
+			}}
 			style={{
 				pointerEvents: book.library?.list ? "none" : "auto",
 			}}
