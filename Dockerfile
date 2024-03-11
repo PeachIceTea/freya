@@ -1,9 +1,23 @@
 FROM alpine:3.19.1 as builder
 RUN apk add --no-cache build-base openssl-dev nodejs npm rustup && \
-    rustup-init -y
+    rustup-init -y --default-toolchain 1.76.0-x86_64-unknown-linux-musl
+
+# Setup environment.
 WORKDIR /freya
+ENV PATH="/root/.cargo/bin:${PATH}" \
+    OPENSSL_LIB_DIR=/usr/lib \
+    OPENSSL_INCLUDE_DIR=/usr/include
+
+# Prebuild dependencies to cache them
+RUN cargo init .
+COPY Cargo.toml Cargo.lock ./
+COPY migrate ./migrate
+RUN cargo build --target x86_64-unknown-linux-musl --release && \
+    rm src/*.rs
+
+# Build actual project
 COPY . .
-RUN ash -c "source '$HOME/.cargo/env' && OPENSSL_STATC=1 OPENSSL_LIB_DIR=/usr/lib OPENSSL_INCLUDE_DIR=/usr/include cargo build --target x86_64-unknown-linux-musl --release"
+RUN cargo build --target x86_64-unknown-linux-musl --release
 
 FROM alpine:3.19.1 as runtime
 RUN apk add --no-cache ffmpeg
@@ -26,5 +40,5 @@ ENV DEFAULT_DIRECTORY=/media
 ENV DATABASE_PATH=/data/freya.db
 ENV COOKIE_ONLY_OVER_HTTPS=true
 
-EXPOSE 80
+EXPOSE $PORT
 CMD /freya/freya
