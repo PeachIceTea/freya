@@ -4,7 +4,7 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
-use tower_cookies::{Cookie, Cookies};
+use tower_cookies::Cookies;
 
 use crate::{
     api_bail, api_response, data_response,
@@ -14,7 +14,7 @@ use crate::{
         password::verify_password,
         response::{ApiError, ApiResult, DataResponse, SuccessResponse},
         session::{
-            create_session_cookie, create_session_id, Session, SessionInfo, SESSION_COOKIE_NAME,
+            create_session_cookie, create_session_id, delete_session_cookie, Session, SessionInfo,
         },
     },
 };
@@ -112,7 +112,7 @@ pub async fn logout(
     .context("Couldn't delete session from database")?;
 
     // Delete the session cookie.
-    cookies.remove(Cookie::new(SESSION_COOKIE_NAME, ""));
+    cookies.remove(delete_session_cookie());
 
     api_response!("server-authentication--logged-out")
 }

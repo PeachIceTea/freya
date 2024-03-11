@@ -223,3 +223,14 @@ pub fn create_session_cookie<'a>(session_id: &str, last_accessed: OffsetDateTime
         .expires(last_accessed + *SESSION_LIFETIME)
         .build()
 }
+
+// Create delete cookie.
+pub fn delete_session_cookie<'a>() -> Cookie<'a> {
+    Cookie::build((SESSION_COOKIE_NAME, ""))
+        .path("/")
+        .http_only(true)
+        .secure(*COOKIE_ONLY_OVER_HTTPS)
+        .same_site(SameSite::Lax)
+        .expires(time::OffsetDateTime::UNIX_EPOCH)
+        .build()
+}
