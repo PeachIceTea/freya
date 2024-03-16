@@ -84,10 +84,6 @@ new-book--cover-generic-explainer = To use it, keep this tab selected when you s
 new-book--tab-cover-select = Select from server
 new-book--cover-select-explainer = Select an image from the server to use as the cover image.
 
-new-book--cover-url-placeholder = Image URL
-new-book--cover-url-explainer = Enter the URL of the image you want to use as the cover.
-new-book--tab-cover-url = Download from URL
-
 new-book--tab-cover-upload = Upload
 new-book--cover-upload-explainer = Upload an image from your computer to use as the cover image.
 

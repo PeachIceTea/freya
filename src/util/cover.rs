@@ -1,9 +1,6 @@
-use std::time::Duration;
-
 use anyhow::{bail, Context, Result};
 use axum::body::Bytes;
 use axum_typed_multipart::FieldData;
-use tokio::time::timeout;
 
 use super::storage::TMP_PATH;
 
@@ -36,8 +33,6 @@ pub async fn get_cover_bytes(data: FieldData<Bytes>) -> Result<Vec<u8>> {
             // Check if string starts with "file://", "extracted-file://" or "http://", "https://".
             if string.starts_with("file://") || string.starts_with("extracted-file://") {
                 read_image(string)
-            } else if string.starts_with("http://") || string.starts_with("https://") {
-                download_image(string).await
             } else {
                 bail!(
                     "Invalid cover image string.\nExpected a path or URL, instead got: {}",
@@ -46,46 +41,6 @@ pub async fn get_cover_bytes(data: FieldData<Bytes>) -> Result<Vec<u8>> {
             }
         }
     }
-}
-
-async fn download_image(url: &str) -> Result<Vec<u8>> {
-    // Send a GET request to the URL.
-    let response = timeout(Duration::from_secs(30), reqwest::get(url))
-        .await
-        .with_context(|| format!("Server did not respond within 30 seconds: {}", url))?
-        .with_context(|| format!("Failed to send GET request to URL: {}", url))?;
-
-    // Check if the response is successful.
-    if !response.status().is_success() {
-        bail!(
-            "Failed to get image from URL: {}\nStatus code: {}",
-            url,
-            response.status()
-        )
-    }
-
-    // Check if the response contains an image.
-    let content_type = response
-        .headers()
-        .get(reqwest::header::CONTENT_TYPE)
-        .context("Failed to get content type from response")?
-        .to_str()
-        .context("Failed to convert content type to string")?
-        .to_string();
-    if !content_type.starts_with("image/") {
-        bail!(
-            "Response does not contain an image: {}\nContent type: {}",
-            url,
-            content_type
-        )
-    }
-
-    // Read the response body.
-    response
-        .bytes()
-        .await
-        .with_context(|| format!("Failed to read response body from URL: {}", url))
-        .map(|bytes| bytes.to_vec())
 }
 
 fn read_image(path: &str) -> Result<Vec<u8>> {

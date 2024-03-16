@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import {
 	Alert,
 	Button,
@@ -17,7 +17,7 @@ import { useTitle } from "../common"
 import { useLocale } from "../locales"
 import { FileSelect } from "./components/FileSelect"
 
-type CoverTabs = "upload" | "select" | "extracted" | "url"
+type CoverTabs = "upload" | "select" | "extracted"
 
 export default function NewBook() {
 	useTitle("new-book--title")
@@ -58,13 +58,6 @@ export default function NewBook() {
 	// Cover data.
 	const [selectCover, setSelectCover] = useState<string | null>(null)
 	const [coverUpload, setCoverUpload] = useState<File | null>(null)
-	const [coverUrl, setCoverUrl] = useState<string>("")
-	const [coverUrlValid, setCoverUrlValid] = useState(false)
-	useEffect(() => {
-		if (coverUrl) {
-			setCoverUrlValid(true)
-		}
-	}, [coverUrl, setCoverUrlValid])
 
 	async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault()
@@ -85,9 +78,6 @@ export default function NewBook() {
 				break
 			case "upload":
 				cover = coverUpload
-				break
-			case "url":
-				cover = coverUrl
 				break
 			case "extracted":
 				cover = fileInfo?.cover
@@ -244,29 +234,6 @@ export default function NewBook() {
 									<Image
 										src={URL.createObjectURL(coverUpload)}
 										thumbnail={true}
-									/>
-								)}
-							</div>
-						</Tab>
-
-						{/* Donwload cover from URL. */}
-						<Tab eventKey="url" title={t("new-book--tab-cover-url")}>
-							<Alert variant="info">
-								{t("new-book--cover-url-explainer")}{" "}
-								{t("new-book--cover-generic-explainer")}
-							</Alert>
-							<Form.Control
-								type="url"
-								placeholder={t("new-book--cover-url-placeholder")}
-								value={coverUrl}
-								onChange={event => setCoverUrl(event.target.value)}
-							/>
-							<div className="d-flex justify-content-center align-items-center mt-2">
-								{coverUrl && coverUrlValid && (
-									<Image
-										src={coverUrl}
-										thumbnail={true}
-										onError={() => setCoverUrlValid(false)}
 									/>
 								)}
 							</div>
