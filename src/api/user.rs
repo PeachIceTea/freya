@@ -25,8 +25,7 @@ pub struct LibraryResponse {
     title: String,
     author: String,
     list: String,
-    // There isn't actually a way for progress to be null, but sqlx apparently can't guarantee that.
-    progress: Option<f64>,
+    progress: f64,
 }
 
 pub async fn get_library(
@@ -55,7 +54,7 @@ pub async fn get_library(
                 WHERE
                     files.book_id = books.id
                     AND file_sub.position < files.position
-            ), library_entries.progress / total_duration.total_duration) as "progress: f64"
+            ), library_entries.progress / total_duration.total_duration) as "progress!: f64"
         FROM books
         JOIN library_entries ON library_entries.book_id = books.id
         JOIN files ON library_entries.file_id = files.id

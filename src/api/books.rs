@@ -45,7 +45,7 @@ pub async fn get_books(
                 author,
                 created,
                 modified,
-                NULL AS "duration: _"
+                NULL AS "duration: f64"
             FROM books
             ORDER BY title ASC
         "#
