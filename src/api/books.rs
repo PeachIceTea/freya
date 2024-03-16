@@ -91,7 +91,7 @@ pub async fn get_book_details(
                 ) AS "duration: f64"
             FROM books
             WHERE id = ?
-        "#, // TODO: Figure out why SQLX thinks the subquery is NULL.
+        "#,
         book_id
     )
     .fetch_optional(&state.db)

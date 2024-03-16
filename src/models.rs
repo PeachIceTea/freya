@@ -9,7 +9,7 @@ pub struct User {
     pub name: String,
 
     #[serde(skip)]
-    pub password: String,
+    pub password: Option<String>,
 
     pub admin: bool,
 

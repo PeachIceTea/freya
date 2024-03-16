@@ -67,7 +67,7 @@ pub async fn login(
     .context(ApiError::InvalidCredentials)?;
 
     // Check if the password is correct.
-    if !verify_password(&user.password, &data.password) {
+    if !verify_password(&user.password.unwrap(), &data.password) {
         api_bail!(InvalidCredentials)
     }
 

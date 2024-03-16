@@ -29,10 +29,22 @@ pub async fn get_users(
     State(state): State<FreyaState>,
 ) -> ApiResult<DataResponse<Vec<User>>> {
     // Get all users.
-    let users = sqlx::query_as!(User, "SELECT * FROM users")
-        .fetch_all(&state.db)
-        .await
-        .context("Failed to fetch users")?;
+    let users = sqlx::query_as!(
+        User,
+        r#"
+            SELECT
+                id,
+                name,
+                NULL AS "password: String",
+                admin,
+                created,
+                modified
+            FROM users
+        "#
+    )
+    .fetch_all(&state.db)
+    .await
+    .context("Failed to fetch users")?;
 
     data_response!(users)
 }
@@ -43,10 +55,24 @@ pub async fn get_user(
     Path(id): Path<i64>,
 ) -> ApiResult<DataResponse<User>> {
     // Get user by id.
-    let user = sqlx::query_as!(User, "SELECT * FROM users WHERE id = ?", id)
-        .fetch_one(&state.db)
-        .await
-        .context("Failed to fetch user")?;
+    let user = sqlx::query_as!(
+        User,
+        r#"
+                SELECT
+                    id,
+                    name,
+                    NULL AS "password: String",
+                    admin,
+                    created,
+                    modified
+                FROM users
+                WHERE id = ?
+            "#,
+        id
+    )
+    .fetch_one(&state.db)
+    .await
+    .context("Failed to fetch user")?;
 
     data_response!(user)
 }
