@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Alert, Container } from "react-bootstrap"
 import { useLocation, useParams } from "wouter"
 
-import { User, updateUser, useUser } from "../api/user"
+import { User, updateUser, useUser } from "../api/account"
 import { useTitle } from "../common"
 import { useLocale } from "../locales"
 import { useStore } from "../store"

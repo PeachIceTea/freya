@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Container } from "react-bootstrap"
 import { useLocation } from "wouter"
 
-import { createUser } from "../api/user"
+import { createUser } from "../api/account"
 import { useTitle } from "../common"
 import { useLocale } from "../locales"
 import UserForm, { UserFormData } from "./components/UserForm"

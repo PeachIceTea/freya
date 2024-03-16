@@ -2,7 +2,7 @@ import dayjs from "dayjs"
 import { Badge, Container, Table } from "react-bootstrap"
 import { Link } from "wouter"
 
-import { useUsers } from "../api/user"
+import { useUsers } from "../api/account"
 import { useTitle } from "../common"
 import { useLocale } from "../locales"
 

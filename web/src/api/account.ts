@@ -25,12 +25,12 @@ export const UsersResponseSchema = DataResponseSchema(UsersSchema)
 
 // Get all users.
 export const getUsers = async () => {
-	const res = await get("/user")
+	const res = await get("/account")
 	return UsersResponseSchema.parse(await res)
 }
 
 export const useUsers = () => {
-	const { data, error: parseError, isLoading } = useSWR("/user", getUsers)
+	const { data, error: parseError, isLoading } = useSWR("/account", getUsers)
 
 	let error
 	if (parseError) {
@@ -52,7 +52,7 @@ export const useUsers = () => {
 
 // Get a single user.
 export const getUser = async (id: number) => {
-	const res = await get(`/user/${id}`)
+	const res = await get(`/account/${id}`)
 	return UserResponseSchema.parse(await res)
 }
 
@@ -61,7 +61,7 @@ export const useUser = (id: number) => {
 		data,
 		error: parseError,
 		isLoading,
-	} = useSWR(`/user/${id}`, () => getUser(id))
+	} = useSWR(`/account/${id}`, () => getUser(id))
 
 	let error
 	if (parseError) {
@@ -85,7 +85,7 @@ export const useUser = (id: number) => {
 export const createUser = async (
 	data: Omit<User, "id" | "created" | "modified"> & { password: string },
 ) => {
-	const res = await post("/user", data)
+	const res = await post("/account", data)
 	return ResponseSchema.parse(await res)
 }
 
@@ -94,6 +94,6 @@ export const updateUser = async (
 	id: number,
 	data: Partial<User> & { password?: string },
 ) => {
-	const res = await patch(`/user/${id}`, data)
+	const res = await patch(`/account/${id}`, data)
 	return ResponseSchema.parse(await res)
 }
