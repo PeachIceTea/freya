@@ -1,28 +1,13 @@
-use sqlx::Sqlite;
-
-pub async fn open_database(path: &str) -> sqlx::Pool<Sqlite> {
-    // Check if database file exists.
-    if !std::path::Path::new(path).exists() {
-        // Touch the database file.
-        std::fs::File::create(path).expect("Should create database file");
-    }
-
-    // Create the database pool.
-    sqlx::Pool::connect(&path)
-        .await
-        .expect("Should connect to database")
-}
-
 #[derive(rust_embed::RustEmbed)]
 #[folder = "sql"]
 struct Migrations;
 
-pub async fn migrate(database: &sqlx::Pool<Sqlite>) {
+pub async fn migrate(db: &sqlx::Pool<sqlx::Sqlite>) {
     tracing::info!("Migrating database");
 
     // Check if migrations table exists.
     if sqlx::query("SELECT name FROM sqlite_master WHERE type='table' AND name='migrations'")
-        .fetch_one(database)
+        .fetch_one(db)
         .await
         .is_err()
     {
@@ -34,7 +19,7 @@ pub async fn migrate(database: &sqlx::Pool<Sqlite>) {
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )",
         )
-        .execute(database)
+        .execute(db)
         .await
         .expect("Should create migrations table");
     }
@@ -47,7 +32,7 @@ pub async fn migrate(database: &sqlx::Pool<Sqlite>) {
 
     // Get the list of migrations that have already been applied.
     let applied_migrations: Vec<String> = sqlx::query_as("SELECT name FROM migrations")
-        .fetch_all(database)
+        .fetch_all(db)
         .await
         .expect("Should fetch applied migrations")
         .into_iter()
@@ -71,14 +56,14 @@ pub async fn migrate(database: &sqlx::Pool<Sqlite>) {
                 &String::from_utf8(migration_file)
                     .expect("Should convert migration file to string"),
             )
-            .execute(database)
+            .execute(db)
             .await
             .expect("Should run migration");
 
             // Insert the migration into the migrations table.
             sqlx::query("INSERT INTO migrations (name) VALUES (?)")
                 .bind(&migration)
-                .execute(database)
+                .execute(db)
                 .await
                 .expect("Should insert migration into migrations table");
         }

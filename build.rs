@@ -1,3 +1,4 @@
+use freya_migrate::migrate;
 use tokio::process::Command;
 
 #[tokio::main]
@@ -21,10 +22,11 @@ async fn main() {
 // Create a database file if none exists.
 async fn migrate_database() {
     // sqlx uses the database file to infer types and check queries at compile time.
-    let database = freya_migrate::open_database("freya.db").await;
-
     // Migrate the database.
-    freya_migrate::migrate(&database).await;
+    let pool = sqlx::Pool::connect("freya.db")
+        .await
+        .expect("Should connect to database");
+    migrate(&pool).await
 }
 
 async fn build_frontend(profile: &str) {

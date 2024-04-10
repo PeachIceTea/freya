@@ -16,6 +16,9 @@ pub enum ApiError {
     #[error("server--not-found")]
     NotFound,
 
+    #[error("server--data-missing")]
+    DataMissing,
+
     // Authentication errors.
     #[error("server-authentication--already-logged-in")]
     AlreadyLoggedIn,
@@ -78,7 +81,8 @@ impl IntoResponse for ApiError {
 
         // Match the error to a status code.
         let status = match api_error {
-            Self::InvalidCredentials
+            Self::DataMissing
+            | Self::InvalidCredentials
             | Self::AlreadyLoggedIn
             | Self::UploadMissingData
             | Self::UploadInvalidFilePath(_)
@@ -93,7 +97,8 @@ impl IntoResponse for ApiError {
 
         // Create the response
         let body = match &api_error {
-            Self::AlreadyLoggedIn
+            Self::DataMissing
+            | Self::AlreadyLoggedIn
             | Self::InvalidCredentials
             | Self::CouldNotListDirectory
             | Self::UploadMissingData

@@ -145,12 +145,11 @@ pub async fn get_audio_file(
     State(state): State<FreyaState>,
 ) -> ApiFileResult<impl IntoResponse> {
     // Get file path from database.
-    let file = sqlx::query!("SELECT path FROM files WHERE id = $1", file_id)
-        .fetch_optional(&state.db)
-        .await
-        .context("Could not connect to database")?
-        .context(ApiError::InvalidPath)?
-        .path;
+    let file = state
+        .database
+        .get_file_path(&file_id)
+        .await?
+        .context(ApiError::InvalidPath)?;
 
     Ok(send_file(&file, Some(&headers)).await)
 }

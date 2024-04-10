@@ -32,7 +32,7 @@ pub async fn rediscover_chapters(
             )
         "#,
     )
-    .fetch_all(&state.db)
+    .fetch_all(&state.database.pool)
     .await
     .context("Failed to fetch books with only one file")?;
 
@@ -49,7 +49,8 @@ pub async fn rediscover_chapters(
     // Update the database with the new chapter info.
     if !chapter_info.is_empty() {
         let mut trx = state
-            .db
+            .database
+            .pool
             .begin()
             .await
             .context("Failed to start transaction")?;

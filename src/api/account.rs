@@ -1,4 +1,3 @@
-use anyhow::Context;
 use axum::{
     extract::{Path, State},
     routing::get,
@@ -8,7 +7,7 @@ use serde::Deserialize;
 
 use crate::{
     api_bail, api_response, data_response,
-    models::User,
+    database::user::User,
     state::FreyaState,
     util::{
         password::hash_password,
@@ -28,22 +27,7 @@ pub async fn get_users(
     State(state): State<FreyaState>,
 ) -> ApiResult<DataResponse<Vec<User>>> {
     // Get all users.
-    let users = sqlx::query_as!(
-        User,
-        r#"
-            SELECT
-                id,
-                name,
-                NULL AS "password: String",
-                admin,
-                created,
-                modified
-            FROM users
-        "#
-    )
-    .fetch_all(&state.db)
-    .await
-    .context("Failed to fetch users")?;
+    let users = state.database.get_all_users().await?;
 
     data_response!(users)
 }
@@ -54,24 +38,7 @@ pub async fn get_user(
     Path(id): Path<i64>,
 ) -> ApiResult<DataResponse<User>> {
     // Get user by id.
-    let user = sqlx::query_as!(
-        User,
-        r#"
-                SELECT
-                    id,
-                    name,
-                    NULL AS "password: String",
-                    admin,
-                    created,
-                    modified
-                FROM users
-                WHERE id = ?
-            "#,
-        id
-    )
-    .fetch_one(&state.db)
-    .await
-    .context("Failed to fetch user")?;
+    let user = state.database.get_user(id).await?;
 
     data_response!(user)
 }
@@ -82,25 +49,27 @@ pub struct CreateUserRequest {
     password: String,
     admin: bool,
 }
-
 pub async fn create_user(
     AdminSession(_): AdminSession,
     State(state): State<FreyaState>,
     Json(body): Json<CreateUserRequest>,
 ) -> ApiResult<SuccessResponse> {
+    // Noramlize username.
+    let username = body.name.trim().to_lowercase();
+
+    // Check if both username and password exists.
+    if username.is_empty() || body.password.is_empty() {
+        api_bail!(DataMissing)
+    }
+
     // Hash password.
     let password = hash_password(&body.password)?;
 
     // Insert user into database.
-    sqlx::query!(
-        "INSERT INTO users (name, password, admin) VALUES (?, ?, ?)",
-        body.name,
-        password,
-        body.admin
-    )
-    .execute(&state.db)
-    .await
-    .context("Failed to create user")?;
+    state
+        .database
+        .create_user(&username, &password, body.admin)
+        .await?;
 
     api_response!("user-create--success")
 }
@@ -122,6 +91,9 @@ pub async fn update_user(
         api_bail!(NotAdmin);
     }
 
+    // Normalize username if it's provided.
+    let username = body.name.map(|name| name.trim().to_lowercase());
+
     // Hash password if it's provided.
     let password = if let Some(password) = body.password {
         Some(hash_password(&password)?)
@@ -130,23 +102,10 @@ pub async fn update_user(
     };
 
     // Update user by id.
-    sqlx::query_as!(
-        User,
-        r#"
-        UPDATE users
-        SET
-            name = COALESCE(?, name),
-            password = COALESCE(?, password),
-            admin = COALESCE(?, admin)
-        WHERE id = ?"#,
-        body.name,
-        password,
-        body.admin,
-        id
-    )
-    .fetch_one(&state.db)
-    .await
-    .context("Failed to update user")?;
+    state
+        .database
+        .update_user(id, username, password, body.admin)
+        .await?;
 
     api_response!("user-edit--success")
 }

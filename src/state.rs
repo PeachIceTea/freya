@@ -1,8 +1,8 @@
-use sqlx::Sqlite;
+use crate::database::Database;
 
 #[derive(Clone)]
 pub struct FreyaState {
-    pub db: sqlx::Pool<Sqlite>,
+    pub database: Database,
 }
 
 impl FreyaState {
@@ -12,13 +12,13 @@ impl FreyaState {
         let database_path =
             std::env::var("DATABASE_PATH").unwrap_or_else(|_| "freya.db".to_string());
 
-        // Create the database pool.
-        let database_pool = freya_migrate::open_database(&database_path).await;
+        // Create instance of database.
+        let database = Database::new(&database_path).await;
 
         // Migrate the database if NO_MIGRATE is not set.
         if std::env::var("NO_MIGRATE").is_err() {
-            freya_migrate::migrate(&database_pool).await;
+            database.migrate().await;
         };
-        Self { db: database_pool }
+        Self { database }
     }
 }

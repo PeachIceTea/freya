@@ -1,5 +1,5 @@
 mod api;
-mod models;
+mod database;
 #[cfg(profile = "release")]
 mod serve;
 mod state;

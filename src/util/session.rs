@@ -5,11 +5,10 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use serde::Serialize;
 use time::OffsetDateTime;
 use tower_cookies::{cookie::SameSite, Cookie, Cookies};
 
-use crate::{api_bail, state::FreyaState};
+use crate::{api_bail, database::session::SessionInfo, state::FreyaState};
 
 use super::{random::random_string, response::ApiError};
 
@@ -49,19 +48,6 @@ pub static COOKIE_ONLY_OVER_HTTPS: once_cell::sync::Lazy<bool> = once_cell::sync
     }
 });
 
-// Extract the session from the request.
-#[derive(Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SessionInfo {
-    #[serde(skip)]
-    pub session_id: String,
-    pub user_id: i64,
-    #[serde(with = "time::serde::iso8601")]
-    last_accessed: time::OffsetDateTime,
-    username: String,
-    pub admin: bool,
-}
-
 // Middleware function to insert SessionInfo into the request extensions.ü+üß
 pub async fn get_session(
     State(state): State<FreyaState>,
@@ -78,34 +64,8 @@ pub async fn get_session(
         None => return next.run(request).await,
     };
 
-    // Get connection from pool.
-    let mut conn = match state.db.acquire().await {
-        Ok(conn) => conn,
-        Err(e) => {
-            tracing::error!("Failed to acquire database connection: {}", e);
-            return next.run(request).await;
-        }
-    };
-
     // Get session from database.
-    let session = match sqlx::query_as!(
-        SessionInfo,
-        r#"
-        SELECT
-            sessions.id as session_id,
-            sessions.user_id,
-            sessions.last_accessed,
-            users.name as username,
-            users.admin
-        FROM sessions
-        INNER JOIN users ON sessions.user_id = users.id
-        WHERE sessions.id = $1
-    "#,
-        session_id,
-    )
-    .fetch_one(conn.as_mut())
-    .await
-    {
+    let session = match state.database.get_session(&session_id).await {
         Ok(session) => session,
         Err(_) => {
             cookies.remove(Cookie::new(SESSION_COOKIE_NAME, ""));
@@ -116,18 +76,14 @@ pub async fn get_session(
     // Check if the session is expired.
     // If it is, delete it from the database and return.
     if session.last_accessed < time::OffsetDateTime::now_utc() - *SESSION_LIFETIME {
-        if let Err(err) = sqlx::query!(
-            r#"
-                DELETE FROM sessions
-                WHERE id = $1
-            "#,
-            session_id,
-        )
-        .execute(conn.as_mut())
-        .await
-        {
-            tracing::error!("Could not delete expired session: {}", err);
-        }
+        let session_id = session.session_id.clone();
+        let db = state.database.clone();
+        tokio::spawn(async move {
+            if let Err(err) = db.delete_session(&session_id).await {
+                tracing::error!("{}", err)
+            }
+        });
+
         cookies.remove(Cookie::new(SESSION_COOKIE_NAME, ""));
         return next.run(request).await;
     }
@@ -142,20 +98,11 @@ pub async fn get_session(
         ));
 
         // Spawn task to update session last access time.
+        let session_id = session.session_id.clone();
+        let db = state.database.clone();
         tokio::spawn(async move {
-            if let Err(err) = sqlx::query!(
-                r#"
-                UPDATE sessions
-                SET last_accessed = CURRENT_TIMESTAMP
-                WHERE id = $1
-            "#,
-                session_id,
-            )
-            .execute(conn.as_mut())
-            .await
-            {
-                tracing::error!("Could not update session last access time: {}", err);
-            }
+            let session_id = session_id;
+            db.update_session_timestamp(&session_id).await
         });
     }
 
