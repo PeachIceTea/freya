@@ -5,7 +5,6 @@ pub mod library;
 pub mod session;
 pub mod user;
 
-use freya_migrate::migrate;
 use sqlx::Sqlite;
 
 #[derive(Clone)]
@@ -30,6 +29,9 @@ impl Database {
     }
 
     pub async fn migrate(&self) {
-        migrate(&self.pool).await;
+        match sqlx::migrate!().run(&self.pool).await {
+            Ok(_) => {}
+            Err(err) => panic!("Could not migrate database: {}", err),
+        };
     }
 }

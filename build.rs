@@ -1,8 +1,10 @@
-use freya_migrate::migrate;
 use tokio::process::Command;
 
 #[tokio::main]
 async fn main() {
+    // Read .env file.
+    dotenvy::dotenv().ok();
+
     // Get profile from environment.
     let profile = std::env::var("PROFILE").unwrap_or_else(|_| "debug".to_string());
 
@@ -20,13 +22,26 @@ async fn main() {
 }
 
 // Create a database file if none exists.
+// sqlx uses the database file to infer types and check queries at compile time.
+// To make it easier we create a database for sqlx to run against at build startup.
 async fn migrate_database() {
-    // sqlx uses the database file to infer types and check queries at compile time.
-    // Migrate the database.
-    let pool = sqlx::Pool::connect("freya.db")
+    let database_path = std::env::var("DATABASE_PATH").unwrap_or_else(|_| "freya.db".to_string());
+
+    // Check if database file exists.
+    if !std::path::Path::new(&database_path).exists() {
+        // Touch the database file.
+        std::fs::File::create(&database_path).expect("Should create database file");
+    }
+
+    // Create the database pool.
+    let pool: sqlx::Pool<sqlx::Sqlite> = sqlx::Pool::connect(&database_path)
         .await
         .expect("Should connect to database");
-    migrate(&pool).await
+
+    match sqlx::migrate!().run(&pool).await {
+        Ok(_) => {}
+        Err(err) => panic!("Could not migrate database: {}", err),
+    };
 }
 
 async fn build_frontend(profile: &str) {

@@ -553,7 +553,6 @@ dependencies = [
  "axum",
  "axum_typed_multipart",
  "dotenvy",
- "freya-migrate",
  "once_cell",
  "rand",
  "regex",
@@ -572,15 +571,6 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "freya-migrate"
-version = "0.1.0"
-dependencies = [
- "rust-embed",
- "sqlx",
- "tracing",
 ]
 
 [[package]]
