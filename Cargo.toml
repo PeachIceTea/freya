@@ -41,7 +41,7 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 tower-cookies = "0.10.0"
 axum_typed_multipart = "0.11.0"
 anyhow = "1.0.79"
-reqwest = "0.11.24"
+reqwest = "0.12.3"
 thiserror = "1.0.56"
 tokio-util = { version = "0.7.10", features = ["io"] }
 
