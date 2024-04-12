@@ -100,10 +100,7 @@ pub async fn get_session(
         // Spawn task to update session last access time.
         let session_id = session.session_id.clone();
         let db = state.database.clone();
-        tokio::spawn(async move {
-            let session_id = session_id;
-            db.update_session_timestamp(&session_id).await
-        });
+        tokio::spawn(async move { db.update_session_timestamp(&session_id).await });
     }
 
     // Insert session into request extensions.
