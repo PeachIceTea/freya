@@ -10,7 +10,7 @@ use regex::Regex;
 use tokio::{fs::File, io::AsyncSeekExt};
 use tokio_util::io::ReaderStream;
 
-const RANGE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^bytes=(\d+)-(\d+)?$").unwrap());
+static RANGE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^bytes=(\d+)-(\d+)?$").unwrap());
 
 pub struct RangeHeader {
     pub start: u64,
@@ -32,10 +32,7 @@ impl FromStr for RangeHeader {
             .as_str()
             .parse::<u64>()?;
 
-        let end = captures
-            .get(2)
-            .map(|m| m.as_str().parse::<u64>().ok())
-            .flatten();
+        let end = captures.get(2).and_then(|m| m.as_str().parse::<u64>().ok());
 
         Ok(Self { start, end })
     }
@@ -57,13 +54,16 @@ pub async fn send_file(path: &str, header: Option<&HeaderMap>) -> impl IntoRespo
     // get range header
     let range = header.and_then(|h| {
         h.get("range")
-            .map(|r| r.to_str().unwrap().parse::<RangeHeader>().ok())
-            .flatten()
+            .and_then(|r| r.to_str().ok().and_then(|r| r.parse::<RangeHeader>().ok()))
     });
 
     // seek to start of range if range header is present
     if let Some(range) = &range {
-        if let Err(_) = file.seek(std::io::SeekFrom::Start(range.start)).await {
+        if file
+            .seek(std::io::SeekFrom::Start(range.start))
+            .await
+            .is_err()
+        {
             return (StatusCode::INTERNAL_SERVER_ERROR).into_response();
         }
     }

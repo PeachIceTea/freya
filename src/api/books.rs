@@ -169,8 +169,8 @@ pub async fn upload_book(
     // This is entirely optional and will not fail the upload if it fails.
     let chapters = if files.len() == 1 {
         let file = &files[0];
-        let chapters = ffprobe_chapters(file).await.ok();
-        chapters
+        
+        ffprobe_chapters(file).await.ok()
     } else {
         None
     };
@@ -205,8 +205,8 @@ pub async fn upload_book(
     let book_id = state
         .database
         .create_book(
-            &title,
-            &author,
+            title,
+            author,
             cover.as_ref(),
             &file_data,
             chapters.as_ref(),

@@ -77,7 +77,7 @@ impl Database {
         title: &str,
         author: &str,
         cover: Option<&Vec<u8>>,
-        file_data: &Vec<FileData>,
+        file_data: &[FileData],
         chapters: Option<&Vec<Chapters>>,
     ) -> Result<i64> {
         let mut trx = self

@@ -116,7 +116,7 @@ pub async fn get_tmp_cover(
     Query(TemporaryCoverQuery { name }): Query<TemporaryCoverQuery>,
 ) -> ApiFileResult<Vec<u8>> {
     // Read the file.
-    let path = TMP_PATH.join(&name);
+    let path = TMP_PATH.join(name);
 
     tracing::debug!("Reading temporary cover image: {}", path.to_string_lossy());
 

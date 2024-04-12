@@ -21,7 +21,7 @@ impl Database {
         }
 
         // Create the database pool.
-        let pool = sqlx::Pool::connect(&path)
+        let pool = sqlx::Pool::connect(path)
             .await
             .expect("Should connect to database");
 

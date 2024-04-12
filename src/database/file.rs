@@ -68,6 +68,6 @@ impl Database {
         .fetch_optional(&self.pool)
         .await
         .context("Unable to get book cover")
-        .map(|result| result.map(|result| result.cover).flatten())
+        .map(|result| result.and_then(|result| result.cover))
     }
 }

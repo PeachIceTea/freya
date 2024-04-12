@@ -62,7 +62,7 @@ pub async fn ffprobe_book_details(path: &str) -> Result<FileInfo> {
     // ffprobe -i ${filePath} -v quiet -print_format json -show_format
     let output = tokio::process::Command::new("ffprobe")
         .arg("-i")
-        .arg(&path)
+        .arg(path)
         .arg("-v")
         .arg("quiet")
         .arg("-print_format")
@@ -90,8 +90,7 @@ pub async fn ffprobe_book_details(path: &str) -> Result<FileInfo> {
         author: None,
         cover: None,
     };
-    if !format.tags.is_none() {
-        let tags = format.tags.unwrap();
+    if let Some(tags) = format.tags {
         if tags.contains_key("album") {
             info.title = Some(tags.get("album").unwrap().to_string());
         } else if tags.contains_key("title") {
@@ -110,7 +109,7 @@ pub async fn ffprobe_book_details(path: &str) -> Result<FileInfo> {
     // ffmpeg -i ${filePath} -v quiet -an -vcodec copy data/tmp/${random}.jpg
     let output = tokio::process::Command::new("ffmpeg")
         .arg("-i")
-        .arg(&path)
+        .arg(path)
         .arg("-v")
         .arg("quiet")
         .arg("-an")
@@ -130,7 +129,7 @@ pub async fn ffprobe_duration(path: &str) -> Result<f64> {
     // ffprobe -i ${filePath} -v quiet -print_format json -show_streams
     let output = tokio::process::Command::new("ffprobe")
         .arg("-i")
-        .arg(&path)
+        .arg(path)
         .arg("-v")
         .arg("quiet")
         .arg("-print_format")
@@ -183,7 +182,7 @@ pub async fn ffprobe_chapters(path: &str) -> Result<Vec<Chapters>> {
     // ffprobe -i ${filePath} -v quiet -print_format json -show_chapters
     let output = tokio::process::Command::new("ffprobe")
         .arg("-i")
-        .arg(&path)
+        .arg(path)
         .arg("-v")
         .arg("quiet")
         .arg("-print_format")
