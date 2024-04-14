@@ -5,9 +5,9 @@
 A server to easily host and listen to audiobooks.
 
 There is a good chance you would be more happy with [Audiobookshelf](https://github.com/advplyr/audiobookshelf).
-Freya is much more limited in scope and relies heavily on the browser to provide the necessary
-codecs and features to play audio. Audiobookshelf is a much more complete solution and is much more
-likely to be what you are looking for.
+Freya is limited in scope and relies heavily on the browser to provide the necessary
+codecs and features to play audio. Audiobookshelf is a more complete solution and much more
+likely what you are looking for.
 
 ## Features
 
@@ -61,6 +61,9 @@ environment variables manually.
 
 3. Then simply run the binary you built. The frontend is bundled into the binary and will be served
    unless the client hits an API endpoint.
+
+Note: By default the migrations run will create an `admin` user with the password `admin`. If you expose Freya
+to the internet, you will want to change the password.
 
 ## License
 
