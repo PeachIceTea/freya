@@ -1,6 +1,6 @@
 FROM alpine:3.19.1 as builder
 RUN apk add --no-cache build-base openssl-dev nodejs npm rustup && \
-    rustup-init -y --default-toolchain 1.76.0-x86_64-unknown-linux-musl
+    rustup-init -y --default-toolchain 1.77.0-x86_64-unknown-linux-musl
 
 # Setup environment.
 WORKDIR /freya
@@ -11,7 +11,6 @@ ENV PATH="/root/.cargo/bin:${PATH}" \
 # Prebuild dependencies to cache them
 RUN cargo init .
 COPY Cargo.toml Cargo.lock ./
-COPY migrate ./migrate
 RUN cargo build --target x86_64-unknown-linux-musl --release && \
     rm src/*.rs
 
