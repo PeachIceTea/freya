@@ -28,6 +28,11 @@ impl Database {
         Self { pool }
     }
 
+    #[cfg(test)]
+    pub fn new_test(pool: sqlx::Pool<Sqlite>) -> Self {
+        Self { pool }
+    }
+
     pub async fn migrate(&self) {
         match sqlx::migrate!().run(&self.pool).await {
             Ok(_) => {}
