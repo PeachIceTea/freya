@@ -21,11 +21,16 @@ impl Database {
         sqlx::query_as!(
             Chapter,
             r#"
-            SELECT *
-            FROM chapters
-            WHERE book_id = ?
-            ORDER BY start ASC
-        "#,
+                SELECT
+                    id,
+                    book_id,
+                    name,
+                    start,
+                    end
+                FROM chapters
+                WHERE book_id = ?
+                ORDER BY start ASC
+            "#,
             book_id
         )
         .fetch_all(&self.pool)

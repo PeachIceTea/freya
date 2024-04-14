@@ -89,10 +89,10 @@ impl Database {
         // Insert book.
         let book_id = sqlx::query!(
             r#"
-            INSERT INTO books (title, author, cover)
-            VALUES (?, ?, ?)
-            RETURNING id
-        "#,
+                INSERT INTO books (title, author, cover)
+                VALUES (?, ?, ?)
+                RETURNING id
+            "#,
             title,
             author,
             cover,
@@ -107,9 +107,9 @@ impl Database {
             let position = position as i64 + 1;
             sqlx::query!(
                 r#"
-                INSERT INTO files (book_id, path, name, position, duration)
-                VALUES (?, ?, ?, ?, ?)
-            "#,
+                    INSERT INTO files (book_id, path, name, position, duration)
+                    VALUES (?, ?, ?, ?, ?)
+                "#,
                 book_id,
                 file.path,
                 file.name,
@@ -126,9 +126,9 @@ impl Database {
             for chapter in chapters {
                 sqlx::query!(
                     r#"
-                    INSERT INTO chapters (book_id, name, start, end)
-                    VALUES (?, ?, ?, ?)
-                "#,
+                        INSERT INTO chapters (book_id, name, start, end)
+                        VALUES (?, ?, ?, ?)
+                    "#,
                     book_id,
                     chapter.name,
                     chapter.start,

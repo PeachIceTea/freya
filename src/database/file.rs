@@ -34,7 +34,15 @@ impl Database {
         sqlx::query_as!(
             File,
             r#"
-                SELECT *
+                SELECT
+                    id,
+                    book_id,
+                    path,
+                    name,
+                    position,
+                    duration,
+                    created,
+                    modified
                 FROM files
                 WHERE book_id = ?
                 ORDER BY position ASC

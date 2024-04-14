@@ -44,7 +44,15 @@ impl Database {
         sqlx::query_as!(
             LibraryEntry,
             r#"
-                SELECT *
+                SELECT
+                    id,
+                    user_id,
+                    book_id,
+                    file_id,
+                    progress,
+                    list,
+                    created,
+                    modified
                 FROM library_entries
                 WHERE user_id = ?
                 AND book_id = ?
