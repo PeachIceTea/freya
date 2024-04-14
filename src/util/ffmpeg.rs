@@ -192,6 +192,8 @@ pub async fn ffprobe_chapters(path: &str) -> Result<Vec<Chapters>> {
         .await?;
 
     if !output.status.success() {
+        //TODO: Actually print error. Calling -v quiet removes any error messages that could be
+        //shown here.
         bail!("ffprobe failed: {:?}", output.stderr);
     }
 
@@ -226,4 +228,139 @@ pub async fn ffprobe_chapters(path: &str) -> Result<Vec<Chapters>> {
             })
         })
         .collect::<Result<Vec<Chapters>>>()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    // The output from ffmpeg isn't perfectly the defined length. We set a tolerance to accept
+    // tiny differences.
+    // As an example the 5 second file created in test_ffprobe_duration reports a 5.041633 length.
+    const TOLERANCE: f64 = 0.1;
+
+    #[test]
+    fn test_is_ffmpeg_installed() {
+        // Test case: Verify that is_ffmpeg_installed returns Ok if ffmpeg and ffprobe are installed
+        let result = is_ffmpeg_installed();
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_ffprobe_book_details() {
+        // Test case: Verify that ffprobe_book_details extracts the correct book details
+        let temp_dir = tempdir().unwrap();
+        let file_path = temp_dir
+            .path()
+            .join("test.mp3")
+            .to_string_lossy()
+            .to_string();
+
+        // Create a sample audio file with metadata tags
+        // ffmpeg -f lavfi -i sine=frequency=1000:duration=5 -metadata album="Test Album" -metadata artist="Test Artist" ${file_path}
+        let _ = tokio::process::Command::new("ffmpeg")
+            .arg("-f")
+            .arg("lavfi")
+            .arg("-i")
+            .arg("sine=frequency=1000:duration=5")
+            .arg("-metadata")
+            .arg("album=Test Album")
+            .arg("-metadata")
+            .arg("artist=Test Artist")
+            .arg(&file_path)
+            .output()
+            .await
+            .unwrap();
+
+        let result = ffprobe_book_details(&file_path).await.unwrap();
+        assert_eq!(result.title, Some("Test Album".to_string()));
+        assert_eq!(result.author, Some("Test Artist".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_ffprobe_duration() {
+        // Test case: Verify that ffprobe_duration extracts the correct audio duration
+        let temp_dir = tempdir().unwrap();
+        let file_path = temp_dir
+            .path()
+            .join("test.mp3")
+            .to_string_lossy()
+            .to_string();
+
+        // Create a sample audio file with a known duration
+        // ffmpeg -f lavfi -i sine=frequency=1000:duration=5 ${file_path}
+        let _ = tokio::process::Command::new("ffmpeg")
+            .arg("-f")
+            .arg("lavfi")
+            .arg("-i")
+            .arg("sine=frequency=1000:duration=5")
+            .arg(&file_path)
+            .output()
+            .await
+            .unwrap();
+
+        let result = ffprobe_duration(&file_path).await.unwrap();
+        assert!((result - 5.0).abs() < TOLERANCE);
+    }
+
+    #[tokio::test]
+    async fn test_ffprobe_chapters() {
+        // Test case: Verify that ffprobe_chapters extracts the correct chapter information
+        let temp_dir = tempdir().unwrap();
+        let file_path = temp_dir
+            .path()
+            .join("test.m4b")
+            .to_string_lossy()
+            .to_string();
+        let chapters_path = temp_dir
+            .path()
+            .join("chapters.txt")
+            .to_string_lossy()
+            .to_string();
+
+        // Create chapters file.
+        std::fs::write(
+            &chapters_path,
+            r#";FFMETADATA1
+[CHAPTER]
+TIMEBASE=1/1000
+START=0
+END=2500
+title=Start
+
+[CHAPTER]
+TIMEBASE=1/1000
+START=2500
+END=5000
+title=End
+"#,
+        )
+        .expect("Should be able to create chapters.txt");
+
+        // Create a sample audio file with chapters
+        // ffmpeg -i ${chapters_path} -f lavfi -i sine=frequency=1000:duration=5 -acodec aac -map_metadata 1 ${file_path}
+        let _ = tokio::process::Command::new("ffmpeg")
+            .arg("-i")
+            .arg(&chapters_path)
+            .arg("-f")
+            .arg("lavfi")
+            .arg("-i")
+            .arg("sine=frequency=1000:duration=5")
+            .arg("-acodec")
+            .arg("aac")
+            .arg(&file_path)
+            .output()
+            .await
+            .unwrap();
+
+        let result = ffprobe_chapters(&file_path).await.unwrap();
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].name, "Start".to_string());
+        assert_eq!(result[0].start, 0.0);
+        assert_eq!(result[0].end, 2.5);
+        assert_eq!(result[1].name, "End".to_string());
+        assert_eq!(result[1].start, 2.5);
+        assert_eq!(result[1].end, 5.0);
+    }
 }
