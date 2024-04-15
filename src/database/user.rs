@@ -162,7 +162,7 @@ mod tests {
         assert_eq!(admin, user.admin);
     }
 
-    #[sqlx::test(fixtures("users"))]
+    #[sqlx::test(fixtures("user"))]
     async fn test_get_all_users(pool: Pool<Sqlite>) {
         let db = Database::new_test(pool);
 
@@ -177,7 +177,7 @@ mod tests {
         assert_eq!(users[1].name, "user");
     }
 
-    #[sqlx::test(fixtures("users"))]
+    #[sqlx::test(fixtures("user"))]
     async fn test_get_user(pool: Pool<Sqlite>) {
         let db = Database::new_test(pool);
 
@@ -188,7 +188,7 @@ mod tests {
         assert!(!user.admin);
     }
 
-    #[sqlx::test(fixtures("users"))]
+    #[sqlx::test(fixtures("user"))]
     async fn test_update_user(pool: Pool<Sqlite>) {
         let db = Database::new_test(pool);
 
@@ -221,7 +221,7 @@ mod tests {
         assert!(updated.admin);
     }
 
-    #[sqlx::test(fixtures("users"))]
+    #[sqlx::test(fixtures("user"))]
     async fn test_update_user_name(pool: Pool<Sqlite>) {
         let db = Database::new_test(pool);
 
@@ -246,7 +246,7 @@ mod tests {
         assert_eq!(updated.admin, user.admin);
     }
 
-    #[sqlx::test(fixtures("users"))]
+    #[sqlx::test(fixtures("user"))]
     async fn test_update_user_password(pool: Pool<Sqlite>) {
         let db = Database::new_test(pool);
 
@@ -271,7 +271,7 @@ mod tests {
         assert_eq!(updated.admin, user.admin);
     }
 
-    #[sqlx::test(fixtures("users"))]
+    #[sqlx::test(fixtures("user"))]
     async fn test_update_user_admin(pool: Pool<Sqlite>) {
         let db = Database::new_test(pool);
 
