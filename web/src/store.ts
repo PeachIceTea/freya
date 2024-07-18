@@ -2,7 +2,7 @@ import { create } from "zustand"
 import { immer } from "zustand/middleware/immer"
 
 import { SessionInfo } from "./api/authentication"
-import { BookDetails } from "./api/books"
+import { BookDetails, File } from "./api/books"
 import {
 	PlaybackSpeedLocalStorageKey,
 	Theme,
@@ -31,6 +31,7 @@ type Actions = {
 
 	// Player actions.
 	playBook: (book: Required<BookDetails>) => void
+	playFile: (file: File) => void
 	play(): void
 	pause(): void
 	togglePlay: () => void
@@ -76,6 +77,12 @@ export const useStore = create<State & Actions>()(
 			set(state => {
 				state.selectedBook = book
 				state.playing = true
+			}),
+		playFile: (file: File) =>
+			set(state => {
+				state.playing = true
+				state.selectedBook.library.fileId = file.id
+				state.selectedBook.library.progress = 0
 			}),
 		play: () =>
 			set(state => {

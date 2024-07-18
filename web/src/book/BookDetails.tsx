@@ -81,8 +81,14 @@ function BookDetailsComponent({
 		}
 
 		state.playBook(playableBook)
-		if (item && "start" in item) {
-			state.seekTo(item.start)
+		if (item) {
+			if ("start" in item) {
+				state.seekTo(item.start)
+			}
+
+			if ("duration" in item) {
+				state.playFile(item)
+			}
 		}
 	}
 
