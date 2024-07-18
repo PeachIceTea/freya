@@ -26,7 +26,7 @@ export default function FileList({
 
 		if ("duration" in item) {
 			return item.id === book.library?.fileId
-				? book.library?.progress / book.duration
+				? book.library?.progress / item.duration
 				: position < playingFileIndex
 					? 1
 					: 0
