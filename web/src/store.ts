@@ -80,9 +80,11 @@ export const useStore = create<State & Actions>()(
 			}),
 		playFile: (file: File) =>
 			set(state => {
-				state.playing = true
-				state.selectedBook.library.fileId = file.id
-				state.selectedBook.library.progress = 0
+				if (state.selectedBook) {
+					state.playing = true
+					state.selectedBook.library.fileId = file.id
+					state.selectedBook.library.progress = 0
+				}
 			}),
 		play: () =>
 			set(state => {
