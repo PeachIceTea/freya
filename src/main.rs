@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 mod api;
 mod database;
 #[cfg(profile = "release")]
@@ -52,8 +54,8 @@ async fn main() {
         .expect("PORT should be a number");
 
     // Start the server.
-    tracing::info!("Starting server at http://localhost:{}", port);
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+    tracing::info!("Starting server at http://localhost:{port}");
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
         .await
         .expect("Should be able to bind to port");
     axum::serve(listener, app)

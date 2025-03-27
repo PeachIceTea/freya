@@ -17,8 +17,8 @@ import type {
 	File,
 } from "../api/books"
 import {
+	LibraryListEnum,
 	LibraryLists,
-	LibraryListsSchema,
 	addBookToLibrary as _addBookToLibrary,
 } from "../api/library"
 import { capitalize, fromSnakeCase, useTitle } from "../common"
@@ -54,8 +54,7 @@ function BookDetailsComponent({
 	// User library data.
 	const hasListened =
 		library && (library.progress > 0 || library.fileId !== book.files[0].id)
-	const isFinished =
-		book.library && book.library.list === LibraryListsSchema.Values.finished
+	const isFinished = book.library && book.library.list === "finished"
 
 	// Function to play book.
 	async function playBook(item?: File | Chapter) {
@@ -68,12 +67,8 @@ function BookDetailsComponent({
 			playableBook = await ensureBookIsPlayable(item)
 		} else {
 			// Reset progress and put book in listening list if it's finished.
-			if (book.library?.list === LibraryListsSchema.Values.finished) {
-				await _addBookToLibrary(
-					book.id,
-					LibraryListsSchema.Values.listening,
-					book.files[0],
-				)
+			if (book.library?.list === "finished") {
+				await _addBookToLibrary(book.id, "listening", book.files[0])
 				await mutate(true)
 			}
 
@@ -109,7 +104,7 @@ function BookDetailsComponent({
 		}
 
 		// Create library entry.
-		await addBookToLibrary(LibraryListsSchema.Values.listening, file)
+		await addBookToLibrary("listening", file)
 		const res = await mutate(true)
 		if (!res?.success || !res.data.library) {
 			throw new Error("Failed to create library entry")
@@ -119,7 +114,7 @@ function BookDetailsComponent({
 	}
 
 	// List button.
-	const listDropdown = Object.values(LibraryListsSchema.Values)
+	const listDropdown = Object.values(LibraryListEnum)
 		.filter(list => list !== book.library?.list)
 		.map(list => (
 			<Dropdown.Item key={list} onClick={() => addBookToLibrary(list)}>
@@ -132,8 +127,7 @@ function BookDetailsComponent({
 		<Button
 			variant="success"
 			onClick={async () => {
-				!book.library?.list &&
-					(await addBookToLibrary(LibraryListsSchema.Values.want_to_listen))
+				!book.library?.list && (await addBookToLibrary("want_to_listen"))
 			}}
 			style={{
 				pointerEvents: book.library?.list ? "none" : "auto",
@@ -141,11 +135,7 @@ function BookDetailsComponent({
 		>
 			{t(book.library?.list ? "book-details--is-in" : "book-details--add-to")}{" "}
 			<span className="fst-italic">
-				{capitalize(
-					fromSnakeCase(
-						book.library?.list ?? LibraryListsSchema.Values.want_to_listen,
-					),
-				)}
+				{capitalize(fromSnakeCase(book.library?.list ?? "want_to_listen"))}
 			</span>
 		</Button>
 	)

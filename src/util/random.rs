@@ -1,7 +1,7 @@
 pub fn random_string(length: usize) -> String {
-    use rand::distributions::{Alphanumeric, DistString};
+    use rand::distr::{Alphanumeric, SampleString};
 
-    Alphanumeric.sample_string(&mut rand::thread_rng(), length)
+    Alphanumeric.sample_string(&mut rand::rng(), length)
 }
 
 #[cfg(test)]

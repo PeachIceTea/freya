@@ -4,8 +4,8 @@ import { useParams } from "wouter"
 
 import {
 	type Library,
+	LibraryListEnum,
 	LibraryLists,
-	LibraryListsSchema,
 	useLibrary,
 } from "../api/library"
 import { capitalize, fromSnakeCase, useTitle } from "../common"
@@ -22,13 +22,13 @@ function LibraryComponent({ library }: { library: Library }) {
 
 	let filteredLibrary = searchFilter
 		? library.filter(book =>
-				`${book.title} ${book.author}`
-					.toLowerCase()
-					.includes(searchFilter.toLowerCase()),
-			)
+			`${book.title} ${book.author}`
+				.toLowerCase()
+				.includes(searchFilter.toLowerCase()),
+		)
 		: library
 
-	const libraryLists = Object.values(LibraryListsSchema.Values).map(list => (
+	const libraryLists = Object.values(LibraryListEnum).map(list => (
 		<option key={list} value={list}>
 			{capitalize(fromSnakeCase(list))} (
 			{filteredLibrary.filter(book => book.list === list).length})

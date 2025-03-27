@@ -1,6 +1,6 @@
-FROM alpine:3.19.1 as builder
+FROM alpine:3.22.0 as builder
 RUN apk add --no-cache build-base openssl-dev nodejs npm rustup && \
-    rustup-init -y --default-toolchain 1.77.0-x86_64-unknown-linux-musl
+    rustup-init -y --default-toolchain 1.88.0-x86_64-unknown-linux-musl
 
 # Setup environment.
 WORKDIR /freya
@@ -18,7 +18,7 @@ RUN cargo build --target x86_64-unknown-linux-musl --release && \
 COPY . .
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
-FROM alpine:3.19.1 as runtime
+FROM alpine:3.22.0 as runtime
 RUN apk add --no-cache ffmpeg
 
 WORKDIR /freya

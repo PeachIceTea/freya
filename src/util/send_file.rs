@@ -2,7 +2,7 @@ use std::{path::Path, str::FromStr};
 
 use axum::{
     body::Body,
-    http::{header, HeaderMap, HeaderValue, Response, StatusCode},
+    http::{HeaderMap, HeaderValue, Response, StatusCode, header},
     response::IntoResponse,
 };
 use once_cell::sync::Lazy;
@@ -38,7 +38,7 @@ impl FromStr for RangeHeader {
     }
 }
 
-pub async fn send_file(path: &str, header: Option<&HeaderMap>) -> impl IntoResponse {
+pub async fn send_file(path: &str, header: Option<&HeaderMap>) -> impl IntoResponse + use<> {
     // check if file exists
     let file_path = Path::new(path);
     if !file_path.exists() {

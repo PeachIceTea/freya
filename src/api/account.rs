@@ -1,7 +1,7 @@
 use axum::{
+    Json, Router,
     extract::{Path, State},
     routing::get,
-    Json, Router,
 };
 use serde::Deserialize;
 
@@ -19,7 +19,7 @@ use crate::{
 pub fn router() -> Router<FreyaState> {
     Router::new()
         .route("/", get(get_users).post(create_user))
-        .route("/:id", get(get_user).patch(update_user))
+        .route("/{id}", get(get_user).patch(update_user))
 }
 
 pub async fn get_users(

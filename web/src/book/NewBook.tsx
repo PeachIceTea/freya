@@ -74,7 +74,7 @@ export default function NewBook() {
 		let cover
 		switch (activeCoverTab) {
 			case "select":
-				cover = selectCover
+				cover = `file://${selectCover}`
 				break
 			case "upload":
 				cover = coverUpload
@@ -113,8 +113,8 @@ export default function NewBook() {
 						error.errorCode,
 						error.value
 							? {
-									error: error.value,
-								}
+								error: error.value,
+							}
 							: undefined,
 					)}
 				</Alert>

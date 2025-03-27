@@ -174,10 +174,10 @@ mod tests {
 
         let result = get_file_system_list(temp_dir_path).await.unwrap();
 
-        assert_eq!(result[0].path, format!("{}/test_dir", temp_dir_path));
-        assert_eq!(result[1].path, format!("{}/1.txt", temp_dir_path));
-        assert_eq!(result[2].path, format!("{}/2.png", temp_dir_path));
-        assert_eq!(result[3].path, format!("{}/3.mp3", temp_dir_path));
+        assert_eq!(result[0].path, format!("{temp_dir_path}/test_dir"));
+        assert_eq!(result[1].path, format!("{temp_dir_path}/1.txt"));
+        assert_eq!(result[2].path, format!("{temp_dir_path}/2.png"));
+        assert_eq!(result[3].path, format!("{temp_dir_path}/3.mp3"));
     }
 
     #[tokio::test]

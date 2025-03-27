@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use axum::body::Bytes;
 use axum_typed_multipart::FieldData;
 
@@ -49,7 +49,7 @@ fn read_image(path: &str) -> Result<Vec<u8>> {
     };
 
     // Read the file.
-    std::fs::read(&path).with_context(|| format!("Failed to read image file: {}", path))
+    std::fs::read(&path).with_context(|| format!("Failed to read image file: {path}"))
 }
 
 #[cfg(test)]
@@ -102,7 +102,7 @@ mod tests {
         fs::write(file_path, &image_data).unwrap();
 
         let field_data = FieldData {
-            contents: Bytes::from(format!("file://{}", file_path)),
+            contents: Bytes::from(format!("file://{file_path}")),
             metadata: axum_typed_multipart::FieldMetadata::default(),
         };
 
@@ -119,7 +119,7 @@ mod tests {
         fs::write(file_path, &image_data).unwrap();
 
         let field_data = FieldData {
-            contents: Bytes::from(format!("extracted-file://{}", file_path)),
+            contents: Bytes::from(format!("extracted-file://{file_path}")),
             metadata: axum_typed_multipart::FieldMetadata::default(),
         };
 
@@ -144,15 +144,17 @@ mod tests {
         // Test case: FieldData contains a path to a non-existing file
         let non_existing_file = "path/to/non_existing_file.jpg";
         let field_data = FieldData {
-            contents: Bytes::from(format!("file://{}", non_existing_file)),
+            contents: Bytes::from(format!("file://{non_existing_file}")),
             metadata: axum_typed_multipart::FieldMetadata::default(),
         };
 
         let result = get_cover_bytes(field_data).await;
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Failed to read image file"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Failed to read image file")
+        );
     }
 }

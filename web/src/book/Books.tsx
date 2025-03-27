@@ -49,17 +49,17 @@ export default function Books() {
 
 	let filteredBooks = searchFilter
 		? books.filter(book =>
-				`${book.title} ${book.author}`
-					.toLowerCase()
-					.includes(searchFilter.toLowerCase()),
-			)
+			`${book.title} ${book.author}`
+				.toLowerCase()
+				.includes(searchFilter.toLowerCase()),
+		)
 		: books
 
 	filteredBooks =
 		filterLibraryBooks && library
 			? filteredBooks.filter(
-					book => !library.some(libraryBook => libraryBook.id === book.id),
-				)
+				book => !library.some(libraryBook => libraryBook.id === book.id),
+			)
 			: filteredBooks
 
 	return (

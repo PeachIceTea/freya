@@ -9,7 +9,7 @@ async fn main() {
     let profile = std::env::var("PROFILE").unwrap_or_else(|_| "debug".to_string());
 
     // Allow cfg(profile = "dev") to be used in the main.rs file.
-    println!("cargo:rustc-cfg=profile=\"{}\"", profile);
+    println!("cargo:rustc-cfg=profile=\"{profile}\"");
 
     // Migrate the database.
     let migration = migrate_database();
@@ -40,7 +40,7 @@ async fn migrate_database() {
 
     match sqlx::migrate!().run(&pool).await {
         Ok(_) => {}
-        Err(err) => panic!("Could not migrate database: {}", err),
+        Err(err) => panic!("Could not migrate database: {err}"),
     };
 }
 

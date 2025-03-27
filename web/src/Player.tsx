@@ -49,18 +49,7 @@ function PlayerComponent({
 	// In theory it might be cleaner to get the store functions via props as well, but that seems
 	// like a hassle. I am not sure if this will cause React to rerender the Player component
 	// multiple times on a single state change, but I don't think it will. 🙏
-	const storeFn = useStore(state => {
-		return {
-			play: state.play,
-			pause: state.pause,
-			nextFile: state.nextFile,
-			prevFile: state.prevFile,
-			updateProgress: state.updateProgress,
-			setVolume: state.setVolume,
-			setPlaybackSpeed: state.setPlaybackSpeed,
-			seekComplete: state.seekComplete,
-		}
-	})
+	const store = useStore(state => state)
 
 	// Create a reference to the audio element.
 	const audioRef = useRef<HTMLAudioElement>(null)
@@ -69,13 +58,13 @@ function PlayerComponent({
 	const chapterMode = selectedBook.chapters && selectedBook.chapters.length > 0
 	const chapter =
 		audioRef.current &&
-		selectedBook.chapters &&
-		selectedBook.chapters.length > 0
+			selectedBook.chapters &&
+			selectedBook.chapters.length > 0
 			? selectedBook.chapters.find(
-					chapter =>
-						audioRef.current!.currentTime > chapter.start &&
-						audioRef.current!.currentTime < chapter.end,
-				)
+				chapter =>
+					audioRef.current!.currentTime > chapter.start &&
+					audioRef.current!.currentTime < chapter.end,
+			)
 			: undefined
 	const audioDuration = chapterMode
 		? chapter
@@ -86,7 +75,7 @@ function PlayerComponent({
 		? chapter
 			? audioRef.current!.currentTime - chapter.start
 			: 0
-		: audioRef.current?.currentTime ?? 0
+		: (audioRef.current?.currentTime ?? 0)
 
 	// Set audioRef to progress whenever a new book is selected.
 	useEffect(() => {
@@ -101,9 +90,9 @@ function PlayerComponent({
 	useEffect(() => {
 		if (forceSeek && audioRef.current) {
 			audioRef.current.currentTime = library.progress
-			storeFn.seekComplete()
+			store.seekComplete()
 		}
-	}, [forceSeek, audioRef, library.progress, storeFn])
+	}, [forceSeek, audioRef, library.progress, store])
 
 	// Audio control functions.
 	async function play() {
@@ -146,7 +135,7 @@ function PlayerComponent({
 				selectedBook.chapters![selectedBook.chapters!.indexOf(chapter) - 1]
 			seek(previousChapter.start, true)
 		} else {
-			storeFn.prevFile()
+			store.prevFile()
 		}
 	}
 
@@ -154,7 +143,7 @@ function PlayerComponent({
 		if (chapter) {
 			seek(chapter.end + 1, true)
 		} else {
-			storeFn.nextFile()
+			store.nextFile()
 		}
 	}
 
@@ -216,17 +205,17 @@ function PlayerComponent({
 			const ref = audioRef.current
 			// Sync events with playing store.
 			const handlePlay = () => {
-				storeFn.play()
+				store.play()
 			}
 			const handlePause = () => {
-				storeFn.pause()
+				store.pause()
 			}
 			ref.addEventListener("play", handlePlay)
 			ref.addEventListener("pause", handlePause)
 
 			// Listen for end of audio to automatically play next file.
 			const handleEnded = () => {
-				if (!storeFn.nextFile()) {
+				if (!store.nextFile()) {
 					addBookToLibrary(selectedBook.id, "finished")
 					mutate(`/book/${selectedBook.id}`)
 				}
@@ -242,7 +231,7 @@ function PlayerComponent({
 					ref.currentTime !== undefined &&
 					!Number.isNaN(ref.currentTime)
 				) {
-					storeFn.updateProgress(ref.currentTime)
+					store.updateProgress(ref.currentTime)
 				}
 			}
 			ref.addEventListener("timeupdate", handleTimeUpdate)
@@ -255,7 +244,7 @@ function PlayerComponent({
 				ref.removeEventListener("timeupdate", handleTimeUpdate)
 			}
 		}
-	}, [audioRef, file, storeFn, selectedBook.id])
+	}, [audioRef, file, store, selectedBook.id])
 
 	// Update progress on the server every 30 seconds.
 	useEffect(() => {
@@ -370,7 +359,7 @@ function PlayerComponent({
 							className="player-control"
 							role="button"
 							onClick={() => {
-								storeFn.pause()
+								store.pause()
 							}}
 						/>
 					) : (
@@ -378,7 +367,7 @@ function PlayerComponent({
 							className="player-control"
 							role="button"
 							onClick={() => {
-								storeFn.play()
+								store.play()
 							}}
 						/>
 					)}
@@ -444,7 +433,7 @@ function PlayerComponent({
 							background: `linear-gradient(to right, #fff ${volume * 100}%, #3a3a3a 0%)`,
 						}}
 						onChange={event => {
-							storeFn.setVolume(parseFloat(event.target.value))
+							store.setVolume(parseFloat(event.target.value))
 						}}
 					/>
 				</div>
@@ -457,7 +446,7 @@ function PlayerComponent({
 						}))}
 						value={playbackSpeed}
 						onChange={value => {
-							storeFn.setPlaybackSpeed(value)
+							store.setPlaybackSpeed(value)
 						}}
 						onOpenChange={setIsPlaybackSpeedOpen}
 						data-bs-theme="dark"
@@ -470,13 +459,7 @@ function PlayerComponent({
 
 export default function Player() {
 	const { selectedBook, playing, volume, playbackSpeed, forceSeek } = useStore(
-		({ selectedBook, playing, volume, playbackSpeed, forceSeek }) => ({
-			selectedBook,
-			playing,
-			volume,
-			playbackSpeed,
-			forceSeek,
-		}),
+		state => state,
 	)
 
 	if (selectedBook === null) {

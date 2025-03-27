@@ -1,6 +1,6 @@
 use std::{collections::HashMap, process::Command};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 
 use super::{cover::RANDOM_FILE_NAME_LENGTH, random::random_string, storage::TMP_PATH};
@@ -115,11 +115,11 @@ pub async fn ffprobe_book_details(path: &str) -> Result<FileInfo> {
         .arg("-an")
         .arg("-vcodec")
         .arg("copy")
-        .arg(TMP_PATH.join(format!("{}.jpg", tmp_file_name)))
+        .arg(TMP_PATH.join(format!("{tmp_file_name}.jpg")))
         .output()
         .await?;
     if output.status.success() {
-        info.cover = Some(format!("extracted-file://{}.jpg", tmp_file_name));
+        info.cover = Some(format!("extracted-file://{tmp_file_name}.jpg"));
     }
 
     Ok(info)

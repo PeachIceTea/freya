@@ -1,12 +1,12 @@
+use anyhow::anyhow;
 use axum::{
-    async_trait,
-    extract::{FromRequestParts, Request, State},
+    extract::{FromRequestParts, OptionalFromRequestParts, Request, State},
     http::request::Parts,
     middleware::Next,
     response::Response,
 };
 use time::OffsetDateTime;
-use tower_cookies::{cookie::SameSite, Cookie, Cookies};
+use tower_cookies::{Cookie, Cookies, cookie::SameSite};
 
 use crate::{api_bail, database::session::SessionInfo, state::FreyaState};
 
@@ -113,7 +113,6 @@ pub async fn get_session(
 // Extract the session from the request.
 pub struct Session(pub SessionInfo);
 
-#[async_trait]
 impl FromRequestParts<FreyaState> for Session {
     type Rejection = ApiError;
 
@@ -129,10 +128,23 @@ impl FromRequestParts<FreyaState> for Session {
     }
 }
 
+impl OptionalFromRequestParts<FreyaState> for Session {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        _state: &FreyaState,
+    ) -> Result<Option<Self>, Self::Rejection> {
+        Ok(parts
+            .extensions
+            .get::<SessionInfo>()
+            .map(|session| Session(session.to_owned())))
+    }
+}
+
 // Extract the session from the request if user is an admin.
 pub struct AdminSession(pub SessionInfo);
 
-#[async_trait]
 impl FromRequestParts<FreyaState> for AdminSession {
     type Rejection = ApiError;
 
@@ -141,7 +153,12 @@ impl FromRequestParts<FreyaState> for AdminSession {
         _state: &FreyaState,
     ) -> Result<Self, Self::Rejection> {
         // Get session from Session extractor.
-        let session = Session::from_request_parts(parts, _state).await?.0;
+        let session =
+            <self::Session as axum::extract::FromRequestParts<FreyaState>>::from_request_parts(
+                parts, _state,
+            )
+            .await?
+            .0;
 
         // Check if user is an admin.
         if !session.admin {

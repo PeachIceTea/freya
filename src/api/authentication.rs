@@ -1,8 +1,8 @@
 use anyhow::Context;
 use axum::{
+    Json, Router, debug_handler,
     extract::State,
     routing::{delete, get, post},
-    Json, Router,
 };
 use tower_cookies::Cookies;
 
@@ -13,7 +13,7 @@ use crate::{
     util::{
         password::verify_password,
         response::{ApiError, ApiResult, DataResponse, SuccessResponse},
-        session::{create_session_cookie, create_session_id, delete_session_cookie, Session},
+        session::{Session, create_session_cookie, create_session_id, delete_session_cookie},
     },
 };
 
@@ -30,6 +30,7 @@ pub struct LoginRequest {
     password: String,
 }
 
+#[debug_handler]
 pub async fn login(
     cookies: Cookies,
     session: Option<Session>,

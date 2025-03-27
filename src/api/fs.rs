@@ -1,10 +1,10 @@
 use anyhow::Context;
 use axum::{
+    Router,
     extract::{Path, Query, State},
     http::HeaderMap,
     response::IntoResponse,
     routing::get,
-    Router,
 };
 use serde::{Deserialize, Serialize};
 
@@ -12,8 +12,8 @@ use crate::{
     api_bail, data_response,
     state::FreyaState,
     util::{
-        ffmpeg::{ffprobe_book_details, FileInfo},
-        list_fs::{get_file_system_list, Entry, IMAGE_EXTENSIONS},
+        ffmpeg::{FileInfo, ffprobe_book_details},
+        list_fs::{Entry, IMAGE_EXTENSIONS, get_file_system_list},
         response::{ApiError, ApiFileResult, ApiResult, DataResponse},
         send_file::send_file,
         session::{AdminSession, Session},
@@ -33,7 +33,7 @@ pub fn router() -> Router<FreyaState> {
         .route("/", get(fs))
         .route("/info", get(ffprobe))
         .route("/tmp-cover", get(get_tmp_cover))
-        .route("/audio/:file_id", get(get_audio_file))
+        .route("/audio/{file_id}", get(get_audio_file))
 }
 
 // Query for the file system list.

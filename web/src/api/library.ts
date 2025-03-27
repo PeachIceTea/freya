@@ -4,12 +4,13 @@ import { z } from "zod"
 import { DataResponseSchema, ResponseSchema, get, post } from "./api"
 import { File } from "./books"
 
-export const LibraryListsSchema = z.enum([
+export const LibraryListEnum = [
 	"listening",
 	"want_to_listen",
 	"finished",
 	"abandoned",
-])
+] as const
+export const LibraryListsSchema = z.enum(LibraryListEnum)
 export type LibraryLists = z.infer<typeof LibraryListsSchema>
 
 // Add a book to user's library.

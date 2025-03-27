@@ -94,7 +94,5 @@ export const getTmpCoverImageURL = (name?: string) => {
 		name = name.slice(17)
 	}
 
-	console.log("getTmpCoverImageURL", name)
-
 	return `/api/fs/tmp-cover?name=${name}`
 }

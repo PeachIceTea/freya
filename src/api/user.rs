@@ -1,7 +1,7 @@
 use axum::{
+    Router,
     extract::{Path, State},
     routing::get,
-    Router,
 };
 
 use crate::{
@@ -15,7 +15,7 @@ use crate::{
 };
 
 pub fn router() -> Router<FreyaState> {
-    Router::new().route("/:id/library", get(get_library))
+    Router::new().route("/{id}/library", get(get_library))
 }
 
 pub async fn get_library(

@@ -18,10 +18,10 @@ use crate::{
 };
 use anyhow::Context;
 use axum::{
+    Json, Router,
     body::Bytes,
     extract::{Path, State},
     routing::{get, post},
-    Json, Router,
 };
 use axum_typed_multipart::{FieldData, TryFromMultipart, TypedMultipart};
 use once_cell::sync::Lazy;
@@ -30,10 +30,10 @@ use serde::{Deserialize, Serialize};
 pub fn router() -> Router<FreyaState> {
     Router::new()
         .route("/", get(get_books).post(upload_book))
-        .route("/:book_id", get(get_book_details))
-        .route("/:book_id/cover", get(get_book_cover))
-        .route("/:book_id/library", post(set_book_list))
-        .route("/:book_id/progress", post(update_progress))
+        .route("/{book_id}", get(get_book_details))
+        .route("/{book_id}/cover", get(get_book_cover))
+        .route("/{book_id}/library", post(set_book_list))
+        .route("/{book_id}/progress", post(update_progress))
 }
 
 pub async fn get_books(
@@ -169,7 +169,7 @@ pub async fn upload_book(
     // This is entirely optional and will not fail the upload if it fails.
     let chapters = if files.len() == 1 {
         let file = &files[0];
-        
+
         ffprobe_chapters(file).await.ok()
     } else {
         None
@@ -204,13 +204,7 @@ pub async fn upload_book(
     // Insert book into the database.
     let book_id = state
         .database
-        .create_book(
-            title,
-            author,
-            cover.as_ref(),
-            &file_data,
-            chapters.as_ref(),
-        )
+        .create_book(title, author, cover.as_ref(), &file_data, chapters.as_ref())
         .await?;
 
     data_response!(UploadBookResponse { book_id })
