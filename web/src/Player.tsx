@@ -12,6 +12,7 @@ import {
 } from "react-icons/tb"
 import { mutate } from "swr"
 import { Link } from "wouter"
+import { useShallow } from "zustand/react/shallow"
 
 import Select from "./Select"
 import { BookDetailsWithLibrary, bookCoverURL } from "./api/books"
@@ -46,10 +47,18 @@ function PlayerComponent({
 	const file = selectedBook.files.find(file => file.id === library.fileId)!
 	const fileUrl = `/api/fs/audio/${file.id}`
 
-	// In theory it might be cleaner to get the store functions via props as well, but that seems
-	// like a hassle. I am not sure if this will cause React to rerender the Player component
-	// multiple times on a single state change, but I don't think it will. 🙏
-	const store = useStore(state => state)
+	const store = useStore(
+		useShallow(state => ({
+			seekComplete: state.seekComplete,
+			prevFile: state.prevFile,
+			nextFile: state.nextFile,
+			play: state.play,
+			pause: state.pause,
+			updateProgress: state.updateProgress,
+			setVolume: state.setVolume,
+			setPlaybackSpeed: state.setPlaybackSpeed,
+		})),
+	)
 
 	// Create a reference to the audio element.
 	const audioRef = useRef<HTMLAudioElement>(null)
@@ -58,13 +67,13 @@ function PlayerComponent({
 	const chapterMode = selectedBook.chapters && selectedBook.chapters.length > 0
 	const chapter =
 		audioRef.current &&
-			selectedBook.chapters &&
-			selectedBook.chapters.length > 0
+		selectedBook.chapters &&
+		selectedBook.chapters.length > 0
 			? selectedBook.chapters.find(
-				chapter =>
-					audioRef.current!.currentTime > chapter.start &&
-					audioRef.current!.currentTime < chapter.end,
-			)
+					chapter =>
+						audioRef.current!.currentTime > chapter.start &&
+						audioRef.current!.currentTime < chapter.end,
+				)
 			: undefined
 	const audioDuration = chapterMode
 		? chapter
@@ -459,7 +468,13 @@ function PlayerComponent({
 
 export default function Player() {
 	const { selectedBook, playing, volume, playbackSpeed, forceSeek } = useStore(
-		state => state,
+		useShallow(state => ({
+			selectedBook: state.selectedBook,
+			playing: state.playing,
+			volume: state.volume,
+			playbackSpeed: state.playbackSpeed,
+			forceSeek: state.forceSeek,
+		})),
 	)
 
 	if (selectedBook === null) {

@@ -2,6 +2,7 @@ import { FluentValue } from "@fluent/bundle"
 import { useEffect, useState } from "react"
 import { useSearch } from "wouter"
 import { z } from "zod"
+import { useShallow } from "zustand/shallow"
 
 import { useLocale } from "./locales"
 import { useStore } from "./store"
@@ -83,7 +84,9 @@ export function useTheme() {
 	// 1. Theme set by user manually.
 	// 2. Theme preference declared by the user's system.
 	// 3. Default to dark theme.
-	const state = useStore()
+	const state = useStore(
+		useShallow(state => ({ theme: state.theme, setTheme: state.setTheme })),
+	)
 	const theme =
 		state.theme !== "system"
 			? state.theme

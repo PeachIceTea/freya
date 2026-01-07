@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Alert, Container } from "react-bootstrap"
 import { useLocation, useParams } from "wouter"
+import { useShallow } from "zustand/shallow"
 
 import { User, updateUser, useUser } from "../api/account"
 import { useTitle } from "../common"
@@ -10,9 +11,7 @@ import UserForm, { UserFormData } from "./components/UserForm"
 
 function UserEditComponent({ user }: { user: User }) {
 	const t = useLocale()
-	const { isAdmin } = useStore(store => ({
-		isAdmin: store.sessionInfo!.admin,
-	}))
+	const isAdmin = useStore(state => Boolean(state.sessionInfo?.admin))
 	const { id, name, admin } = user
 
 	const title = t("user-edit--title", {
@@ -73,10 +72,12 @@ function UserEditComponent({ user }: { user: User }) {
 export default function UserEdit() {
 	const t = useLocale()
 	const { id } = useParams()
-	const { userId, isAdmin } = useStore(store => ({
-		userId: store.sessionInfo!.userId,
-		isAdmin: store.sessionInfo!.admin,
-	}))
+	const { userId, isAdmin } = useStore(
+		useShallow(store => ({
+			userId: store.sessionInfo!.userId,
+			isAdmin: store.sessionInfo!.admin,
+		})),
+	)
 
 	const { user, error, isLoading } = useUser(+id!)
 

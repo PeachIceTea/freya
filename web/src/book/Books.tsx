@@ -11,7 +11,7 @@ import BookList from "./components/BookList"
 export default function Books() {
 	useTitle("books--title")
 	const t = useLocale()
-	const state = useStore()
+	const userId = useStore(state => state.sessionInfo!.userId)
 
 	const [filterLibraryBooks, setFilterLibraryBooks] = useState<boolean>(true)
 	const [searchFilter, setSearchFilter] = useState<string | null>(null)
@@ -21,7 +21,7 @@ export default function Books() {
 		library,
 		error: libraryError,
 		isLoading: libraryLoading,
-	} = useLibrary(state.sessionInfo!.userId)
+	} = useLibrary(userId)
 
 	if (isLoading || libraryLoading) {
 		return <h1>Loading...</h1>
@@ -49,17 +49,17 @@ export default function Books() {
 
 	let filteredBooks = searchFilter
 		? books.filter(book =>
-			`${book.title} ${book.author}`
-				.toLowerCase()
-				.includes(searchFilter.toLowerCase()),
-		)
+				`${book.title} ${book.author}`
+					.toLowerCase()
+					.includes(searchFilter.toLowerCase()),
+			)
 		: books
 
 	filteredBooks =
 		filterLibraryBooks && library
 			? filteredBooks.filter(
-				book => !library.some(libraryBook => libraryBook.id === book.id),
-			)
+					book => !library.some(libraryBook => libraryBook.id === book.id),
+				)
 			: filteredBooks
 
 	return (

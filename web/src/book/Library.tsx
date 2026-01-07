@@ -22,10 +22,10 @@ function LibraryComponent({ library }: { library: Library }) {
 
 	let filteredLibrary = searchFilter
 		? library.filter(book =>
-			`${book.title} ${book.author}`
-				.toLowerCase()
-				.includes(searchFilter.toLowerCase()),
-		)
+				`${book.title} ${book.author}`
+					.toLowerCase()
+					.includes(searchFilter.toLowerCase()),
+			)
 		: library
 
 	const libraryLists = Object.values(LibraryListEnum).map(list => (
@@ -67,9 +67,9 @@ function LibraryComponent({ library }: { library: Library }) {
 export default function Library() {
 	const t = useLocale()
 	const { id } = useParams()
-	const state = useStore()
+	const sessionUserId = useStore(state => state.sessionInfo!.userId)
 
-	const userId = id ? Number.parseInt(id, 10) : state.sessionInfo!.userId
+	const userId = id ? Number.parseInt(id, 10) : sessionUserId
 	const { library, error, isLoading } = useLibrary(userId)
 
 	if (isLoading) {
