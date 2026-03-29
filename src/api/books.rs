@@ -12,8 +12,10 @@ use crate::{
     util::{
         cover::get_cover_bytes,
         ffmpeg::{ffprobe_chapters, ffprobe_duration},
+        path::validate_path_within_bounds,
         response::{ApiError, ApiFileResult, ApiResult, DataResponse, SuccessResponse},
         session::{AdminSession, Session},
+        storage::FREYA_MEDIA_ROOT,
     },
 };
 use anyhow::Context;
@@ -24,7 +26,8 @@ use axum::{
     routing::{get, post},
 };
 use axum_typed_multipart::{FieldData, TryFromMultipart, TypedMultipart};
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
+
 use serde::{Deserialize, Serialize};
 
 pub fn router() -> Router<FreyaState> {
@@ -89,7 +92,7 @@ pub async fn get_book_details(
     })
 }
 
-static PLACEHOLDER_COVER: Lazy<Vec<u8>> = Lazy::new(|| {
+static PLACEHOLDER_COVER: LazyLock<Vec<u8>> = LazyLock::new(|| {
     let placeholder_cover = include_bytes!("../../placeholder-cover.jpg");
     placeholder_cover.to_vec()
 });
@@ -145,11 +148,14 @@ pub async fn upload_book(
         api_bail!(UploadMissingData)
     }
 
-    // Check if each file path exists.
+    // Validate each file path exists and stays within allowed bounds.
+    let allowed_root = &*FREYA_MEDIA_ROOT;
     for file in &files {
-        if !std::path::Path::new(file).exists() {
+        let file_path = std::path::Path::new(file);
+        if !file_path.exists() {
             api_bail!(UploadInvalidFilePath, file.to_string())
         }
+        validate_path_within_bounds(file_path, allowed_root)?;
     }
 
     // Extract cover image.

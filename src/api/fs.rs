@@ -14,19 +14,13 @@ use crate::{
     util::{
         ffmpeg::{FileInfo, ffprobe_book_details},
         list_fs::{Entry, IMAGE_EXTENSIONS, get_file_system_list},
+        path::validate_path_within_bounds,
         response::{ApiError, ApiFileResult, ApiResult, DataResponse},
         send_file::send_file,
         session::{AdminSession, Session},
-        storage::TMP_PATH,
+        storage::{FREYA_MEDIA_ROOT, TMP_PATH},
     },
 };
-
-// Default directory to list.
-// Read DEFAULT_DIRECTORY from environment variable using a lazy once_cell.
-// Default to /.
-pub static DEFAULT_DIRECTORY: once_cell::sync::Lazy<String> = once_cell::sync::Lazy::new(|| {
-    std::env::var("DEFAULT_DIRECTORY").unwrap_or_else(|_| "/".to_string())
-});
 
 pub fn router() -> Router<FreyaState> {
     Router::new()
@@ -56,14 +50,19 @@ pub async fn fs(
     Query(FsQuery { path }): Query<FsQuery>,
 ) -> ApiResult<DataResponse<FsResponse>> {
     let path = path.map_or_else(
-        || DEFAULT_DIRECTORY.to_string(),
+        || FREYA_MEDIA_ROOT.to_string_lossy().into_owned(),
         |p| match p.trim() {
-            "" => DEFAULT_DIRECTORY.to_string(),
+            "" => FREYA_MEDIA_ROOT.to_string_lossy().into_owned(),
             p => p.to_string(),
         },
     );
 
-    let list = get_file_system_list(&path)
+    // Validate path stays within allowed bounds; fall back to FREYA_MEDIA_ROOT if invalid.
+    let validated_path =
+        validate_path_within_bounds(std::path::Path::new(&path), &FREYA_MEDIA_ROOT)
+            .unwrap_or_else(|_| FREYA_MEDIA_ROOT.clone());
+
+    let list = get_file_system_list(&validated_path)
         .await
         .context(ApiError::CouldNotListDirectory)?;
 
@@ -73,7 +72,7 @@ pub async fn fs(
         .unwrap_or_else(|| "/".to_string());
 
     data_response!(FsResponse {
-        path,
+        path: validated_path.to_string_lossy().to_string(),
         parent_path,
         directory: list,
     })
@@ -93,19 +92,18 @@ pub async fn ffprobe(
 ) -> ApiResult<DataResponse<FfprobeResponse>> {
     let path = path.context(ApiError::InvalidPath)?;
 
-    let info = ffprobe_book_details(&path)
+    // Validate the path stays within allowed bounds. Path must be exact for ffprobe.
+    let validated_path =
+        validate_path_within_bounds(std::path::Path::new(&path), &*FREYA_MEDIA_ROOT)?;
+    let validated_path_str = validated_path.to_string_lossy().to_string();
+
+    let info = ffprobe_book_details(&validated_path_str)
         .await
-        .with_context(|| ApiError::FFProbeFailed(path.to_string()))?;
+        .with_context(|| ApiError::FFProbeFailed(validated_path_str))?;
 
     data_response!(FfprobeResponse { path, info })
 }
 
-// If PathBuf::join() is called with an absolute path, it will ignore the previous path. This allows
-// the use of this function for both extracted files and files selected from the file system. It
-// also theoretically allows the use of this function to download arbitrary files from the server.
-// Not sure that is an actual attack vector, but it is something to keep in mind. To limit the
-// potential damage, this function can only be called by an admin and checks if the file has an
-// image extension.
 #[derive(Deserialize)]
 pub struct TemporaryCoverQuery {
     name: String,
@@ -115,13 +113,18 @@ pub async fn get_tmp_cover(
     AdminSession(_): AdminSession,
     Query(TemporaryCoverQuery { name }): Query<TemporaryCoverQuery>,
 ) -> ApiFileResult<Vec<u8>> {
-    // Read the file.
-    let path = TMP_PATH.join(name);
+    // Join name with TMP_PATH before validating — name is a bare filename, not a full path.
+    let full_path = TMP_PATH.join(&name);
+    let validated_path =
+        validate_path_within_bounds(&full_path, &TMP_PATH).context(ApiError::InvalidPath)?;
 
-    tracing::debug!("Reading temporary cover image: {}", path.to_string_lossy());
+    tracing::debug!(
+        "Reading temporary cover image: {}",
+        validated_path.to_string_lossy()
+    );
 
     // Check if the file is an image.
-    let ext = path
+    let ext = validated_path
         .extension()
         .context(ApiError::InvalidPath)?
         .to_string_lossy();
@@ -129,8 +132,12 @@ pub async fn get_tmp_cover(
         api_bail!(InvalidPath)
     }
 
-    let data = std::fs::read(&path)
-        .with_context(|| format!("Failed to read image file: {}", path.to_string_lossy()))?;
+    let data = std::fs::read(&validated_path).with_context(|| {
+        format!(
+            "Failed to read image file: {}",
+            validated_path.to_string_lossy()
+        )
+    })?;
 
     Ok(data)
 }

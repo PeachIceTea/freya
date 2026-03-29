@@ -2,7 +2,10 @@ use anyhow::{Context, Result, bail};
 use axum::body::Bytes;
 use axum_typed_multipart::FieldData;
 
-use super::storage::TMP_PATH;
+use crate::util::path::FileSchemes;
+
+use super::path::{resolve_scheme_path, validate_path_within_bounds};
+use super::storage::{FREYA_MEDIA_ROOT, TMP_PATH};
 
 pub static RANDOM_FILE_NAME_LENGTH: usize = 12;
 
@@ -35,26 +38,23 @@ pub async fn get_cover_bytes(data: FieldData<Bytes>) -> Result<Vec<u8>> {
 }
 
 fn read_image(path: &str) -> Result<Vec<u8>> {
-    // Extract scheme from path.
-    let scheme = path
-        .split("://")
-        .next()
-        .context("Failed to extract scheme from path")?;
-
-    // Get absolute path for file.
-    let path = match scheme {
-        "file" => path[7..].to_string(),
-        "extracted-file" => TMP_PATH.join(&path[17..]).to_string_lossy().to_string(),
-        _ => bail!("Invalid scheme in path: {}", scheme),
+    // Resolve the scheme-prefixed path, then validate it stays within its allowed root.
+    let (scheme, resolved_path) = resolve_scheme_path(path)?;
+    let validated_path = match scheme {
+        FileSchemes::File => {
+            validate_path_within_bounds(&resolved_path, &FREYA_MEDIA_ROOT)?
+        }
+        FileSchemes::ExtractedFile => validate_path_within_bounds(&resolved_path, &TMP_PATH)?,
     };
 
-    // Read the file.
-    std::fs::read(&path).with_context(|| format!("Failed to read image file: {path}"))
+    std::fs::read(&validated_path)
+        .with_context(|| format!("Failed to read image file: {}", validated_path.display()))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::util::storage::TMP_PATH;
     use axum::body::Bytes;
     use axum_typed_multipart::FieldData;
     use std::fs;
@@ -150,11 +150,5 @@ mod tests {
 
         let result = get_cover_bytes(field_data).await;
         assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("Failed to read image file")
-        );
     }
 }
