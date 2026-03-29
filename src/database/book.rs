@@ -4,7 +4,7 @@ use time::OffsetDateTime;
 
 use crate::util::ffmpeg::Chapters;
 
-use super::{file::FileData, Database};
+use super::{Database, file::FileData};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]

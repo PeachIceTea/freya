@@ -113,8 +113,8 @@ export default function NewBook() {
 						error.errorCode,
 						error.value
 							? {
-								error: error.value,
-							}
+									error: error.value,
+								}
 							: undefined,
 					)}
 				</Alert>

@@ -1,5 +1,5 @@
 use axum::{
-    http::{header, Uri},
+    http::{Uri, header},
     response::IntoResponse,
 };
 use rust_embed::RustEmbed;

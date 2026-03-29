@@ -1,5 +1,5 @@
 use anyhow::Context;
-use axum::{extract::State, routing::post, Router};
+use axum::{Router, extract::State, routing::post};
 
 use crate::{
     api_response,
