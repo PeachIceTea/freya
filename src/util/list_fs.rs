@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use serde::Serialize;
 use tokio::io;
 
@@ -26,7 +28,7 @@ pub struct Entry {
     category: FileCategory,
 }
 
-pub async fn get_file_system_list(path: &str) -> Result<Vec<Entry>, io::Error> {
+pub async fn get_file_system_list(path: &Path) -> Result<Vec<Entry>, io::Error> {
     use FileCategory::*;
 
     let mut entries = Vec::new();
@@ -101,7 +103,7 @@ mod tests {
     use std::path::Path;
     use tokio::fs;
 
-    async fn create_test_files(temp_dir_path: &str) {
+    async fn create_test_files(temp_dir_path: &Path) {
         // Create an audio file in the temporary directory
         let file_path = Path::new(temp_dir_path).join("3.mp3");
         fs::write(&file_path, b"").await.unwrap();
@@ -127,7 +129,7 @@ mod tests {
     async fn test_entry_count() {
         // Test case: Verify that get_file_system_list returns the correct number of entries
         let temp_dir = tempfile::tempdir().unwrap();
-        let temp_dir_path = temp_dir.path().to_str().unwrap();
+        let temp_dir_path = temp_dir.path();
         create_test_files(temp_dir_path).await;
 
         let result = get_file_system_list(temp_dir_path).await.unwrap();
@@ -139,7 +141,7 @@ mod tests {
     async fn test_alphabetical_order() {
         // Test case: Verify that get_file_system_list returns entries sorted alphabetically
         let temp_dir = tempfile::tempdir().unwrap();
-        let temp_dir_path = temp_dir.path().to_str().unwrap();
+        let temp_dir_path = temp_dir.path();
         create_test_files(temp_dir_path).await;
 
         let result = get_file_system_list(temp_dir_path).await.unwrap();
@@ -154,7 +156,7 @@ mod tests {
     async fn test_entry_categories() {
         // Test case: Verify that get_file_system_list returns entries with correct categories
         let temp_dir = tempfile::tempdir().unwrap();
-        let temp_dir_path = temp_dir.path().to_str().unwrap();
+        let temp_dir_path = temp_dir.path();
         create_test_files(temp_dir_path).await;
 
         let result = get_file_system_list(temp_dir_path).await.unwrap();
@@ -169,22 +171,34 @@ mod tests {
     async fn test_entry_paths() {
         // Test case: Verify that get_file_system_list returns entries with correct paths
         let temp_dir = tempfile::tempdir().unwrap();
-        let temp_dir_path = temp_dir.path().to_str().unwrap();
+        let temp_dir_path = temp_dir.path();
         create_test_files(temp_dir_path).await;
 
         let result = get_file_system_list(temp_dir_path).await.unwrap();
 
-        assert_eq!(result[0].path, format!("{temp_dir_path}/test_dir"));
-        assert_eq!(result[1].path, format!("{temp_dir_path}/1.txt"));
-        assert_eq!(result[2].path, format!("{temp_dir_path}/2.png"));
-        assert_eq!(result[3].path, format!("{temp_dir_path}/3.mp3"));
+        assert_eq!(
+            result[0].path,
+            temp_dir_path.join("test_dir").to_string_lossy()
+        );
+        assert_eq!(
+            result[1].path,
+            temp_dir_path.join("1.txt").to_string_lossy()
+        );
+        assert_eq!(
+            result[2].path,
+            temp_dir_path.join("2.png").to_string_lossy()
+        );
+        assert_eq!(
+            result[3].path,
+            temp_dir_path.join("3.mp3").to_string_lossy()
+        );
     }
 
     #[tokio::test]
     async fn test_hidden_files_excluded() {
         // Test case: Verify that get_file_system_list excludes hidden files
         let temp_dir = tempfile::tempdir().unwrap();
-        let temp_dir_path = temp_dir.path().to_str().unwrap();
+        let temp_dir_path = temp_dir.path();
         create_test_files(temp_dir_path).await;
 
         let result = get_file_system_list(temp_dir_path).await.unwrap();
@@ -196,7 +210,7 @@ mod tests {
     async fn test_invalid_unicode_filename() {
         // Test case: Verify that get_file_system_list handles files with invalid Unicode names
         let temp_dir = tempfile::tempdir().unwrap();
-        let temp_dir_path = temp_dir.path().to_str().unwrap();
+        let temp_dir_path = temp_dir.path();
 
         // Create a file with an invalid Unicode name
         let invalid_file_name = b"invalid_\xfe_filename.txt";
@@ -217,7 +231,7 @@ mod tests {
     async fn test_invalid_unicode_directory_name() {
         // Test case: Verify that get_file_system_list handles files in directories with invalid Unicode names
         let temp_dir = tempfile::tempdir().unwrap();
-        let temp_dir_path = temp_dir.path().to_str().unwrap();
+        let temp_dir_path = temp_dir.path();
 
         // Create a directory with an invalid Unicode name
         let invalid_dir_name = b"invalid_\xfe_directory";
