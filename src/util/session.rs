@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use axum::{
     extract::{FromRequestParts, OptionalFromRequestParts, Request, State},
     http::request::Parts,
@@ -22,8 +21,8 @@ pub static SESSION_COOKIE_NAME: &str = "freya_session";
 // Read SESSION_LIFETIME from environment variable using a lazy once_cell.
 // SESSION_LIFETIME is in hours.
 // Default to 30 days.
-pub static SESSION_LIFETIME: once_cell::sync::Lazy<time::Duration> =
-    once_cell::sync::Lazy::new(|| {
+pub static SESSION_LIFETIME: std::sync::LazyLock<time::Duration> =
+    std::sync::LazyLock::new(|| {
         if let Ok(session_lifetime) = std::env::var("SESSION_LIFETIME") {
             time::Duration::hours(
                 session_lifetime
@@ -38,7 +37,7 @@ pub static SESSION_LIFETIME: once_cell::sync::Lazy<time::Duration> =
 // Cookie secure flag.
 // Read COOKIE_ONLY_OVER_HTTPS from environment variable using a lazy once_cell.
 // Default to false.
-pub static COOKIE_ONLY_OVER_HTTPS: once_cell::sync::Lazy<bool> = once_cell::sync::Lazy::new(|| {
+pub static COOKIE_ONLY_OVER_HTTPS: std::sync::LazyLock<bool> = std::sync::LazyLock::new(|| {
     if let Ok(cookie_only_over_https) = std::env::var("COOKIE_ONLY_OVER_HTTPS") {
         cookie_only_over_https
             .parse()
@@ -48,7 +47,7 @@ pub static COOKIE_ONLY_OVER_HTTPS: once_cell::sync::Lazy<bool> = once_cell::sync
     }
 });
 
-// Middleware function to insert SessionInfo into the request extensions.ü+üß
+// Middleware function to insert SessionInfo into the request extensions.
 pub async fn get_session(
     State(state): State<FreyaState>,
     cookies: Cookies,

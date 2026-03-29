@@ -5,12 +5,12 @@ use axum::{
     http::{HeaderMap, HeaderValue, Response, StatusCode, header},
     response::IntoResponse,
 };
-use once_cell::sync::Lazy;
 use regex::Regex;
+use std::sync::LazyLock;
 use tokio::{fs::File, io::AsyncSeekExt};
 use tokio_util::io::ReaderStream;
 
-static RANGE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^bytes=(\d+)-(\d+)?$").unwrap());
+static RANGE_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^bytes=(\d+)-(\d+)?$").unwrap());
 
 pub struct RangeHeader {
     pub start: u64,
@@ -58,14 +58,13 @@ pub async fn send_file(path: &str, header: Option<&HeaderMap>) -> impl IntoRespo
     });
 
     // seek to start of range if range header is present
-    if let Some(range) = &range {
-        if file
+    if let Some(range) = &range
+        && file
             .seek(std::io::SeekFrom::Start(range.start))
             .await
             .is_err()
-        {
-            return (StatusCode::INTERNAL_SERVER_ERROR).into_response();
-        }
+    {
+        return (StatusCode::INTERNAL_SERVER_ERROR).into_response();
     }
 
     // get file size
