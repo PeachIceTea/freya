@@ -1,10 +1,15 @@
 use std::path::PathBuf;
-
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
 use super::random::random_string;
 
-pub static TMP_PATH: Lazy<PathBuf> = Lazy::new(|| {
+/// The root directory for all user-accessible media files.
+/// Controlled by the `DEFAULT_DIRECTORY` environment variable (default: `/`).
+/// All file access from the API is bounded to this directory.
+pub static FREYA_MEDIA_ROOT: LazyLock<PathBuf> =
+    LazyLock::new(|| std::env::var("DEFAULT_DIRECTORY").map_or_else(|_| PathBuf::from("/"), PathBuf::from));
+
+pub static TMP_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
     // Create temporary directory.
     let random = random_string(12);
     let path = std::env::temp_dir().join(format!("freya-{random}"));
