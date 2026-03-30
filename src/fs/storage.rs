@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
-use super::random::random_string;
+use crate::auth::random::random_string;
 
 /// The root directory for all user-accessible media files.
 /// Controlled by the `DEFAULT_DIRECTORY` environment variable (default: `/`).

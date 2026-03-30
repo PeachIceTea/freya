@@ -3,6 +3,7 @@ mod admin;
 mod authentication;
 mod books;
 mod fs;
+pub mod response;
 mod user;
 
 use axum::{Json, Router, http::StatusCode, middleware, response::IntoResponse, routing::get};
@@ -10,7 +11,7 @@ use serde::Serialize;
 use tower_cookies::CookieManagerLayer;
 use tower_http::trace::TraceLayer;
 
-use crate::{state::FreyaState, util::session::get_session};
+use crate::{auth::session::get_session, state::FreyaState};
 
 pub async fn build_router(state: FreyaState) -> Router {
     Router::new()

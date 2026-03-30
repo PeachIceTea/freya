@@ -2,10 +2,8 @@ use anyhow::{Context, Result, bail};
 use axum::body::Bytes;
 use axum_typed_multipart::FieldData;
 
-use crate::util::path::FileSchemes;
-
-use super::path::{resolve_scheme_path, validate_path_within_bounds};
-use super::storage::{FREYA_MEDIA_ROOT, TMP_PATH};
+use crate::fs::path::{FileSchemes, resolve_scheme_path, validate_path_within_bounds};
+use crate::fs::storage::{FREYA_MEDIA_ROOT, TMP_PATH};
 
 pub static RANDOM_FILE_NAME_LENGTH: usize = 12;
 
@@ -54,7 +52,7 @@ fn read_image(path: &str) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::util::storage::TMP_PATH;
+    use crate::fs::storage::TMP_PATH;
     use axum::body::Bytes;
     use axum_typed_multipart::FieldData;
     use std::fs;

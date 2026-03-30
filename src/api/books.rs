@@ -2,22 +2,18 @@ use std::fmt::{Display, Formatter};
 
 use crate::{
     api_bail, api_response, data_response,
+    auth::session::{AdminSession, Session},
     database::{
         book::Book,
         chapter::Chapter,
         file::{File, FileData},
         library::LibraryEntry,
     },
+    fs::{path::validate_path_within_bounds, storage::FREYA_MEDIA_ROOT},
+    media::{cover::get_cover_bytes, ffmpeg::{ffprobe_chapters, ffprobe_duration}},
     state::FreyaState,
-    util::{
-        cover::get_cover_bytes,
-        ffmpeg::{ffprobe_chapters, ffprobe_duration},
-        path::validate_path_within_bounds,
-        response::{ApiError, ApiFileResult, ApiResult, DataResponse, SuccessResponse},
-        session::{AdminSession, Session},
-        storage::FREYA_MEDIA_ROOT,
-    },
 };
+use super::response::{ApiError, ApiFileResult, ApiResult, DataResponse, SuccessResponse};
 use anyhow::Context;
 use axum::{
     Json, Router,

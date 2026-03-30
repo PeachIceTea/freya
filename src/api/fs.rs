@@ -10,17 +10,17 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     api_bail, data_response,
-    state::FreyaState,
-    util::{
-        ffmpeg::{FileInfo, ffprobe_book_details},
+    auth::session::{AdminSession, Session},
+    fs::{
         list_fs::{Entry, IMAGE_EXTENSIONS, get_file_system_list},
         path::validate_path_within_bounds,
-        response::{ApiError, ApiFileResult, ApiResult, DataResponse},
         send_file::send_file,
-        session::{AdminSession, Session},
         storage::{FREYA_MEDIA_ROOT, TMP_PATH},
     },
+    media::ffmpeg::{FileInfo, ffprobe_book_details},
+    state::FreyaState,
 };
+use super::response::{ApiError, ApiFileResult, ApiResult, DataResponse};
 
 pub fn router() -> Router<FreyaState> {
     Router::new()

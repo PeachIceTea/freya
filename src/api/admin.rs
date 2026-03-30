@@ -3,13 +3,11 @@ use axum::{Router, extract::State, routing::post};
 
 use crate::{
     api_response,
+    auth::session::AdminSession,
+    media::ffmpeg::ffprobe_chapters,
     state::FreyaState,
-    util::{
-        ffmpeg::ffprobe_chapters,
-        response::{ApiResult, SuccessResponse},
-        session::AdminSession,
-    },
 };
+use super::response::{ApiResult, SuccessResponse};
 
 pub fn router() -> Router<FreyaState> {
     Router::new().route("/rediscover-chapters", post(rediscover_chapters))

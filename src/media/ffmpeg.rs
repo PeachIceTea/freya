@@ -3,7 +3,9 @@ use std::{collections::HashMap, process::Command};
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 
-use super::{cover::RANDOM_FILE_NAME_LENGTH, random::random_string, storage::TMP_PATH};
+use super::cover::RANDOM_FILE_NAME_LENGTH;
+use crate::auth::random::random_string;
+use crate::fs::storage::TMP_PATH;
 
 pub fn is_ffmpeg_installed() -> Result<()> {
     let ffmpeg_output = Command::new("ffmpeg").arg("-version").output()?;

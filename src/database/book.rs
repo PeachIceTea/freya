@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use serde::Serialize;
 use time::OffsetDateTime;
 
-use crate::util::ffmpeg::Chapters;
+use crate::media::ffmpeg::Chapters;
 
 use super::{Database, file::FileData};
 

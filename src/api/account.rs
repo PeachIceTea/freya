@@ -7,14 +7,11 @@ use serde::Deserialize;
 
 use crate::{
     api_bail, api_response, data_response,
+    auth::{password::hash_password, session::{AdminSession, Session}},
     database::user::User,
     state::FreyaState,
-    util::{
-        password::hash_password,
-        response::{ApiResult, DataResponse, SuccessResponse},
-        session::{AdminSession, Session},
-    },
 };
+use super::response::{ApiResult, DataResponse, SuccessResponse};
 
 pub fn router() -> Router<FreyaState> {
     Router::new()

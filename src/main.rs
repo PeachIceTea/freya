@@ -1,17 +1,19 @@
 #![allow(unexpected_cfgs)]
 
 mod api;
+mod auth;
 mod database;
+mod fs;
+mod media;
 #[cfg(profile = "release")]
 mod serve;
 mod state;
-mod util;
 
 use axum::Router;
 use tokio::signal;
 use tracing_subscriber::prelude::*;
 
-use crate::util::storage::TMP_PATH;
+use crate::fs::storage::TMP_PATH;
 
 #[tokio::main]
 async fn main() {
@@ -31,7 +33,7 @@ async fn main() {
         .init();
 
     // Check if ffmpeg and ffprobe are installed.
-    util::ffmpeg::is_ffmpeg_installed().expect("Should be able to access ffmpeg and ffprobe");
+    media::ffmpeg::is_ffmpeg_installed().expect("Should be able to access ffmpeg and ffprobe");
 
     // Build application.
     let state: state::FreyaState = state::FreyaState::new().await;

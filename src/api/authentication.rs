@@ -8,14 +8,14 @@ use tower_cookies::Cookies;
 
 use crate::{
     api_bail, api_response, data_response,
-    database::session::SessionInfo,
-    state::FreyaState,
-    util::{
+    auth::{
         password::verify_password,
-        response::{ApiError, ApiResult, DataResponse, SuccessResponse},
         session::{Session, create_session_cookie, create_session_id, delete_session_cookie},
     },
+    database::session::SessionInfo,
+    state::FreyaState,
 };
+use super::response::{ApiError, ApiResult, DataResponse, SuccessResponse};
 
 pub fn build_router() -> Router<FreyaState> {
     Router::new()

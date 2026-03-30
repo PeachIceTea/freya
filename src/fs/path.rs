@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::util::response::ApiError;
+use crate::api::response::ApiError;
 
 /// Canonicalizes a path and verifies it stays within allowed bounds.
 /// Both the path and the root are canonicalized, so symlinks in either are resolved.
@@ -40,7 +40,7 @@ pub fn resolve_scheme_path(path: &str) -> Result<(FileSchemes, PathBuf), ApiErro
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::util::storage::TMP_PATH;
+    use crate::fs::storage::TMP_PATH;
     use std::fs;
     use std::os::unix::fs::symlink;
     use tempfile::tempdir;

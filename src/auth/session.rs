@@ -9,7 +9,8 @@ use tower_cookies::{Cookie, Cookies, cookie::SameSite};
 
 use crate::{api_bail, database::session::SessionInfo, state::FreyaState};
 
-use super::{random::random_string, response::ApiError};
+use crate::api::response::ApiError;
+use super::random::random_string;
 
 // Bytes of entropy in the session id.
 pub static SESSION_ID_ENTROPY: usize = 32;

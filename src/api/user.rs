@@ -6,13 +6,11 @@ use axum::{
 
 use crate::{
     data_response,
+    auth::session::Session,
     database::library::LibraryResponse,
     state::FreyaState,
-    util::{
-        response::{ApiResult, DataResponse},
-        session::Session,
-    },
 };
+use super::response::{ApiResult, DataResponse};
 
 pub fn router() -> Router<FreyaState> {
     Router::new().route("/{id}/library", get(get_library))

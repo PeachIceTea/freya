@@ -185,12 +185,12 @@ impl ErrorResponse {
 #[macro_export]
 macro_rules! api_response {
     ($message:expr) => {
-        Ok(axum::Json($crate::util::response::SuccessResponse::new(
+        Ok(axum::Json($crate::api::response::SuccessResponse::new(
             $message, None,
         )))
     };
     ($message:expr, $value:expr) => {
-        Ok(axum::Json($crate::util::response::SuccessResponse::new(
+        Ok(axum::Json($crate::api::response::SuccessResponse::new(
             $message,
             Some($value),
         )))
@@ -201,7 +201,7 @@ macro_rules! api_response {
 #[macro_export]
 macro_rules! data_response {
     ($data:expr) => {
-        Ok(axum::Json($crate::util::response::DataResponse::new($data)))
+        Ok(axum::Json($crate::api::response::DataResponse::new($data)))
     };
 }
 
@@ -209,38 +209,38 @@ macro_rules! data_response {
 #[macro_export]
 macro_rules! api_error {
     ($err:ident) => {
-        $crate::util::response::ApiError::$err
+        $crate::api::response::ApiError::$err
     };
     ($err:ident, $arg:expr) => {
-        $crate::util::response::ApiError::$err(format!("{}", $arg))
+        $crate::api::response::ApiError::$err(format!("{}", $arg))
     };
     ($err:ident, $($arg:tt)*) => {
-        $crate::util::response::ApiError::$err(format!($($arg)*))
+        $crate::api::response::ApiError::$err(format!($($arg)*))
     };
 }
 
 #[macro_export]
 macro_rules! api_error_result {
     ($err:ident) => {
-        Err($crate::util::response::ApiError::$err)
+        Err($crate::api::response::ApiError::$err)
     };
     ($err:ident, $arg:expr) => {
-        Err($crate::util::response::ApiError::$err(format!("{}", $arg)))
+        Err($crate::api::response::ApiError::$err(format!("{}", $arg)))
     };
     ($err:ident, $($arg:tt)*) => {
-        Err($crate::util::response::ApiError::$err(format!($($arg)*)))
+        Err($crate::api::response::ApiError::$err(format!($($arg)*)))
     };
 }
 
 #[macro_export]
 macro_rules! api_bail {
     ($err:ident) => {
-        return Err($crate::util::response::ApiError::$err)
+        return Err($crate::api::response::ApiError::$err)
     };
     ($err:ident, $arg:expr) => {
-        return Err($crate::util::response::ApiError::$err(format!("{}", $arg)))
+        return Err($crate::api::response::ApiError::$err(format!("{}", $arg)))
     };
     ($err:ident, $($arg:tt)*) => {
-        return Err($crate::util::response::ApiError::$err(format!($($arg)*)))
+        return Err($crate::api::response::ApiError::$err(format!($($arg)*)))
     };
 }
