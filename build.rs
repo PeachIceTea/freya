@@ -53,7 +53,6 @@ async fn build_frontend(profile: &str) {
     // Install npm dependencies.
     Command::new("npm")
         .arg("install")
-        .current_dir("web")
         .status()
         .await
         .expect("Should be able to run npm install");
@@ -62,7 +61,6 @@ async fn build_frontend(profile: &str) {
     let status = Command::new("npm")
         .arg("run")
         .arg("build")
-        .current_dir("web")
         .status()
         .await
         .expect("Should be able to run npm build");

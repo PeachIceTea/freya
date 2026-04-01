@@ -35,7 +35,7 @@ pub struct LibraryResponse {
 }
 
 impl Database {
-    // Get a users library entry for a given book.
+    /// Get a users library entry for a given book.
     pub async fn get_library_entry(
         &self,
         user_id: i64,
@@ -65,7 +65,7 @@ impl Database {
         .context("Unable to get library entry")
     }
 
-    // Updates a users progress.
+    /// Updates a users progress.
     pub async fn update_progress(
         &self,
         user_id: i64,

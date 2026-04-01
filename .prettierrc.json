@@ -1,0 +1,19 @@
+{
+    "printWidth": 100,
+    "singleQuote": false,
+    "trailingComma": "all",
+    "arrowParens": "avoid",
+    "endOfLine": "auto",
+    "semi": false,
+    "useTabs": false,
+    "tabWidth": 4,
+    "plugins": [
+        "prettier-plugin-tailwindcss",
+        "@trivago/prettier-plugin-sort-imports",
+        "prettier-plugin-organize-attributes"
+    ],
+    "importOrderParserPlugins": ["decorators", "typescript"],
+    "importOrderSeparation": true,
+    "importOrderSortSpecifiers": true,
+    "importOrder": ["<THIRD_PARTY_MODULES>", "([.][.]?/)|(app/)"]
+}

@@ -33,7 +33,7 @@ fmt:
 
 lint:
     cargo clippy
-    cd web && npm run lint
+    npm run lint
 
 # Test all
 test:

@@ -9,8 +9,8 @@ use tower_cookies::{Cookie, Cookies, cookie::SameSite};
 
 use crate::{api_bail, database::session::SessionInfo, state::FreyaState};
 
-use crate::api::response::ApiError;
 use super::random::random_string;
+use crate::api::response::ApiError;
 
 // Bytes of entropy in the session id.
 pub static SESSION_ID_ENTROPY: usize = 32;
@@ -22,18 +22,17 @@ pub static SESSION_COOKIE_NAME: &str = "freya_session";
 // Read SESSION_LIFETIME from environment variable using a lazy once_cell.
 // SESSION_LIFETIME is in hours.
 // Default to 30 days.
-pub static SESSION_LIFETIME: std::sync::LazyLock<time::Duration> =
-    std::sync::LazyLock::new(|| {
-        if let Ok(session_lifetime) = std::env::var("SESSION_LIFETIME") {
-            time::Duration::hours(
-                session_lifetime
-                    .parse::<i64>()
-                    .expect("SESSION_LIFETIME environment variable should be an integer"),
-            )
-        } else {
-            time::Duration::days(30)
-        }
-    });
+pub static SESSION_LIFETIME: std::sync::LazyLock<time::Duration> = std::sync::LazyLock::new(|| {
+    if let Ok(session_lifetime) = std::env::var("SESSION_LIFETIME") {
+        time::Duration::hours(
+            session_lifetime
+                .parse::<i64>()
+                .expect("SESSION_LIFETIME environment variable should be an integer"),
+        )
+    } else {
+        time::Duration::days(30)
+    }
+});
 
 // Cookie secure flag.
 // Read COOKIE_ONLY_OVER_HTTPS from environment variable using a lazy once_cell.

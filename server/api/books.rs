@@ -1,8 +1,10 @@
 use std::fmt::{Display, Formatter};
 
+use super::response::{ApiError, ApiFileResult, ApiResult, DataResponse, SuccessResponse};
 use crate::{
-    api_bail, api_response, data_response,
+    api_bail, api_response,
     auth::session::{AdminSession, Session},
+    data_response,
     database::{
         book::Book,
         chapter::Chapter,
@@ -10,16 +12,18 @@ use crate::{
         library::LibraryEntry,
     },
     fs::{path::validate_path_within_bounds, storage::FREYA_MEDIA_ROOT},
-    media::{cover::get_cover_bytes, ffmpeg::{ffprobe_chapters, ffprobe_duration}},
+    media::{
+        cover::get_cover_bytes,
+        ffmpeg::{ffprobe_chapters, ffprobe_duration},
+    },
     state::FreyaState,
 };
-use super::response::{ApiError, ApiFileResult, ApiResult, DataResponse, SuccessResponse};
 use anyhow::Context;
 use axum::{
     Json, Router,
     body::Bytes,
     extract::{Path, State},
-    routing::{get, post},
+    routing::{get, put},
 };
 use axum_typed_multipart::{FieldData, TryFromMultipart, TypedMultipart};
 use std::sync::LazyLock;
@@ -31,8 +35,8 @@ pub fn router() -> Router<FreyaState> {
         .route("/", get(get_books).post(upload_book))
         .route("/{book_id}", get(get_book_details))
         .route("/{book_id}/cover", get(get_book_cover))
-        .route("/{book_id}/library", post(set_book_list))
-        .route("/{book_id}/progress", post(update_progress))
+        .route("/{book_id}/library", put(set_book_list))
+        .route("/{book_id}/progress", put(update_progress))
 }
 
 pub async fn get_books(
@@ -242,7 +246,7 @@ pub struct SetBookList {
     progress: Option<f64>,
 }
 
-// Move book into a library list.
+/// Move book into a library list.
 pub async fn set_book_list(
     Session(session): Session,
     Path(book_id): Path<i64>,
