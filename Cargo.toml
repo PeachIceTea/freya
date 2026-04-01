@@ -6,6 +6,10 @@ license = "ISC"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "freya"
+path = "server/main.rs"
+
 [profile.release]
 lto = true
 codegen-units = 1

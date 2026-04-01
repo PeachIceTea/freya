@@ -9,10 +9,10 @@ ENV PATH="/root/.cargo/bin:${PATH}" \
     OPENSSL_INCLUDE_DIR=/usr/include
 
 # Prebuild dependencies to cache them
-RUN cargo init .
+RUN mkdir -p server && echo 'fn main() {}' > server/main.rs
 COPY Cargo.toml Cargo.lock ./
 RUN cargo build --target x86_64-unknown-linux-musl --release && \
-    rm src/*.rs
+    rm server/*.rs
 
 # Build actual project
 COPY . .
