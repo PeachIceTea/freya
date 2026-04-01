@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::Context;
 use axum::{
     Router,
@@ -23,6 +25,8 @@ use crate::{
     state::FelaState,
 };
 
+/// Build router for file system routes.
+/// Is attached to `/fs`.
 pub fn router() -> Router<FelaState> {
     Router::new()
         .route("/", get(fs))
@@ -31,12 +35,13 @@ pub fn router() -> Router<FelaState> {
         .route("/audio/{file_id}", get(get_audio_file))
 }
 
-// Query for the file system list.
+/// Query for the file system list.
 #[derive(Deserialize)]
 pub struct FsQuery {
     path: Option<String>,
 }
 
+/// Response for a file system query.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FsResponse {
@@ -45,39 +50,47 @@ pub struct FsResponse {
     directory: Vec<Entry>,
 }
 
-// List a directory in the file system.
+/// List a directory in the file system.
 pub async fn fs(
-    Session(_): Session,
+    AdminSession(_): AdminSession,
     Query(FsQuery { path }): Query<FsQuery>,
 ) -> ApiResult<DataResponse<FsResponse>> {
-    let path = path.map_or_else(
-        || FELA_MEDIA_ROOT.to_string_lossy().into_owned(),
-        |p| match p.trim() {
-            "" => FELA_MEDIA_ROOT.to_string_lossy().into_owned(),
-            p => p.to_string(),
-        },
-    );
+    let path = path
+        .as_deref()
+        .map(str::trim)
+        .filter(|p| !p.is_empty())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| FELA_MEDIA_ROOT.to_owned());
 
     // Validate path stays within allowed bounds; fall back to FELA_MEDIA_ROOT if invalid.
-    let validated_path = validate_path_within_bounds(std::path::Path::new(&path), &FELA_MEDIA_ROOT)
-        .unwrap_or_else(|_| FELA_MEDIA_ROOT.clone());
+    let path = validate_path_within_bounds(&path, &FELA_MEDIA_ROOT).unwrap_or_else(|_| {
+        tracing::warn!(
+            "Path traversal attempt, clamping to media root: {}",
+            path.to_string_lossy()
+        );
+        FELA_MEDIA_ROOT.clone()
+    });
 
-    let list = get_file_system_list(&validated_path)
+    let list = get_file_system_list(&path)
         .await
         .context(ApiError::CouldNotListDirectory)?;
 
-    let parent_path = std::path::Path::new(&path)
+    // Send down the parent directory for easier traversal.
+    // This might point outside of FELA_MEDIA_ROOT, but any future calls to `fs` will clamp.
+    // There is also no information leakage, the client sees the full path either way.
+    let parent_path = path
         .parent()
-        .map(|p| p.to_string_lossy().to_string())
+        .map(|p| p.to_string_lossy().into_owned())
         .unwrap_or_else(|| "/".to_string());
 
     data_response!(FsResponse {
-        path: validated_path.to_string_lossy().to_string(),
+        path: path.to_string_lossy().into_owned(),
         parent_path,
         directory: list,
     })
 }
 
+/// FFProbe response.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FfprobeResponse {
@@ -85,30 +98,34 @@ pub struct FfprobeResponse {
     info: FileInfo,
 }
 
-// Get ffprobe info for a file.
+/// Get ffprobe info for a file.
 pub async fn ffprobe(
-    Session(_): Session,
+    AdminSession(_): AdminSession,
     Query(FsQuery { path }): Query<FsQuery>,
 ) -> ApiResult<DataResponse<FfprobeResponse>> {
     let path = path.context(ApiError::InvalidPath)?;
 
     // Validate the path stays within allowed bounds. Path must be exact for ffprobe.
-    let validated_path =
-        validate_path_within_bounds(std::path::Path::new(&path), &*FELA_MEDIA_ROOT)?;
-    let validated_path_str = validated_path.to_string_lossy().to_string();
+    let path = validate_path_within_bounds(std::path::Path::new(&path), &FELA_MEDIA_ROOT)?;
 
-    let info = ffprobe_book_details(&validated_path_str)
+    let info = ffprobe_book_details(&path)
         .await
-        .with_context(|| ApiError::FFProbeFailed(validated_path_str))?;
+        .with_context(|| ApiError::FFProbeFailed(path.to_string_lossy().into_owned()))?;
 
-    data_response!(FfprobeResponse { path, info })
+    data_response!(FfprobeResponse {
+        path: path.to_string_lossy().into_owned(),
+        info
+    })
 }
 
+/// Querystring for a temporary cover request.
 #[derive(Deserialize)]
 pub struct TemporaryCoverQuery {
     name: String,
 }
 
+/// Return a temporary cover.
+/// The path is handed via querystring `&name=`.
 pub async fn get_tmp_cover(
     AdminSession(_): AdminSession,
     Query(TemporaryCoverQuery { name }): Query<TemporaryCoverQuery>,
@@ -142,9 +159,8 @@ pub async fn get_tmp_cover(
     Ok(data)
 }
 
-// Send user the requested audio file.
-// We use the path stored in the database to get the file.
-
+/// Send user the requested audio file.
+/// We use the path stored in the database to get the file.
 pub async fn get_audio_file(
     Session(_): Session,
     Path(file_id): Path<String>,

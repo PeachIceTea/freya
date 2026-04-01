@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::{collections::HashMap, process::Command};
 
 use anyhow::{Context, Result, bail};
@@ -60,7 +61,7 @@ pub struct FileInfo {
     cover: Option<String>,
 }
 
-pub async fn ffprobe_book_details(path: &str) -> Result<FileInfo> {
+pub async fn ffprobe_book_details(path: &Path) -> Result<FileInfo> {
     // ffprobe -i ${filePath} -v quiet -print_format json -show_format
     let output = tokio::process::Command::new("ffprobe")
         .arg("-i")
@@ -127,7 +128,7 @@ pub async fn ffprobe_book_details(path: &str) -> Result<FileInfo> {
     Ok(info)
 }
 
-pub async fn ffprobe_duration(path: &str) -> Result<f64> {
+pub async fn ffprobe_duration(path: &Path) -> Result<f64> {
     // ffprobe -i ${filePath} -v quiet -print_format json -show_streams
     let output = tokio::process::Command::new("ffprobe")
         .arg("-i")
@@ -180,7 +181,7 @@ pub struct Chapters {
     pub end: f64,
 }
 
-pub async fn ffprobe_chapters(path: &str) -> Result<Vec<Chapters>> {
+pub async fn ffprobe_chapters(path: &Path) -> Result<Vec<Chapters>> {
     // ffprobe -i ${filePath} -v quiet -print_format json -show_chapters
     let output = tokio::process::Command::new("ffprobe")
         .arg("-i")
@@ -253,11 +254,7 @@ mod tests {
     async fn test_ffprobe_book_details() {
         // Test case: Verify that ffprobe_book_details extracts the correct book details
         let temp_dir = tempdir().unwrap();
-        let file_path = temp_dir
-            .path()
-            .join("test.mp3")
-            .to_string_lossy()
-            .to_string();
+        let file_path = temp_dir.path().join("test.mp3");
 
         // Create a sample audio file with metadata tags
         // ffmpeg -f lavfi -i sine=frequency=1000:duration=5 -metadata album="Test Album" -metadata artist="Test Artist" ${file_path}
@@ -284,11 +281,7 @@ mod tests {
     async fn test_ffprobe_duration() {
         // Test case: Verify that ffprobe_duration extracts the correct audio duration
         let temp_dir = tempdir().unwrap();
-        let file_path = temp_dir
-            .path()
-            .join("test.mp3")
-            .to_string_lossy()
-            .to_string();
+        let file_path = temp_dir.path().join("test.mp3");
 
         // Create a sample audio file with a known duration
         // ffmpeg -f lavfi -i sine=frequency=1000:duration=5 ${file_path}
@@ -310,16 +303,8 @@ mod tests {
     async fn test_ffprobe_chapters() {
         // Test case: Verify that ffprobe_chapters extracts the correct chapter information
         let temp_dir = tempdir().unwrap();
-        let file_path = temp_dir
-            .path()
-            .join("test.m4b")
-            .to_string_lossy()
-            .to_string();
-        let chapters_path = temp_dir
-            .path()
-            .join("chapters.txt")
-            .to_string_lossy()
-            .to_string();
+        let file_path = temp_dir.path().join("test.m4b");
+        let chapters_path = temp_dir.path().join("chapters.txt");
 
         // Create chapters file.
         std::fs::write(

@@ -6,17 +6,21 @@ mod fs;
 pub mod response;
 mod user;
 
-use axum::{Json, Router, http::StatusCode, middleware, response::IntoResponse, routing::get};
-use serde::Serialize;
+use axum::{Router, middleware, routing::get};
 use tower_http::trace::TraceLayer;
 
-use crate::{auth::session::get_session, state::FelaState};
+use crate::{
+    api::response::{ApiResult, SuccessResponse},
+    api_bail, api_response,
+    auth::session::get_session,
+    state::FelaState,
+};
 
 pub async fn build_router(state: FelaState) -> Router {
     Router::new()
         .fallback(route_not_found)
         .route("/", get(greet))
-        .merge(authentication::build_router())
+        .merge(authentication::router())
         .nest("/book", books::router())
         .nest("/user", user::router())
         .nest("/fs", fs::router())
@@ -26,36 +30,10 @@ pub async fn build_router(state: FelaState) -> Router {
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }
-
-#[derive(Serialize, Clone, Copy)]
-#[serde(rename_all = "camelCase")]
-struct Greeting {
-    success: bool,
-    message: &'static str,
+pub async fn greet() -> ApiResult<SuccessResponse> {
+    api_response!("Welcome to Fela!")
 }
 
-static GREETING: Json<Greeting> = Json(Greeting {
-    success: true,
-    message: "Welcome to Fela!",
-});
-pub async fn greet() -> impl IntoResponse {
-    GREETING
-}
-
-#[derive(Serialize, Clone, Copy)]
-#[serde(rename_all = "camelCase")]
-struct NotFound {
-    success: bool,
-    error_code: &'static str,
-}
-static NOT_FOUND: (StatusCode, Json<NotFound>) = (
-    StatusCode::NOT_FOUND,
-    Json(NotFound {
-        success: false,
-        error_code: "NotFound",
-    }),
-);
-
-pub async fn route_not_found() -> impl IntoResponse {
-    NOT_FOUND
+pub async fn route_not_found() -> ApiResult<()> {
+    api_bail!(NotFound)
 }

@@ -17,22 +17,25 @@ use crate::{
     state::FelaState,
 };
 
+/// Build router for account routes.
+/// Is attached to `/account`.
 pub fn router() -> Router<FelaState> {
     Router::new()
         .route("/", get(get_users).post(create_user))
         .route("/{id}", get(get_user).patch(update_user))
 }
 
+/// Get all users.
 pub async fn get_users(
     Session(_): Session,
     State(state): State<FelaState>,
 ) -> ApiResult<DataResponse<Vec<User>>> {
-    // Get all users.
     let users = state.database.get_all_users().await?;
 
     data_response!(users)
 }
 
+/// Get an individual user.
 pub async fn get_user(
     Session(_): Session,
     State(state): State<FelaState>,
@@ -44,12 +47,16 @@ pub async fn get_user(
     data_response!(user)
 }
 
+/// Request data for a new user.
 #[derive(Deserialize)]
 pub struct CreateUserRequest {
     name: String,
     password: String,
     admin: bool,
 }
+
+/// Create a new user.
+/// Admin only route.
 pub async fn create_user(
     AdminSession(_): AdminSession,
     State(state): State<FelaState>,
@@ -74,6 +81,8 @@ pub async fn create_user(
 
     api_response!("user-create--success")
 }
+
+/// Data to update a user.
 #[derive(Deserialize)]
 pub struct UpdateUserRequest {
     name: Option<String>,
@@ -81,6 +90,9 @@ pub struct UpdateUserRequest {
     admin: Option<bool>,
 }
 
+/// Update a user account.
+/// Normal users are only allowed to update their own account.
+/// Admins are allowed to update any account.
 pub async fn update_user(
     Session(session): Session,
     State(state): State<FelaState>,

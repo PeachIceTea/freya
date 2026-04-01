@@ -18,24 +18,29 @@ use crate::{
     state::FelaState,
 };
 
-pub fn build_router() -> Router<FelaState> {
+/// Build router for authentication.
+/// Is attached to `/`, **NOT** `/auth`.
+pub fn router() -> Router<FelaState> {
     Router::new()
         .route("/login", post(login))
         .route("/logout", delete(logout))
         .route("/info", get(info))
 }
 
+/// Data expected during a login request.
 #[derive(Deserialize)]
 pub struct LoginRequest {
     username: String,
     password: String,
 }
 
+/// Reponse to login request handing over the session id.
 #[derive(Serialize)]
 pub struct LoginResponse {
     token: String,
 }
 
+/// Create new session and get session token.
 #[debug_handler]
 pub async fn login(
     session: Option<Session>,
@@ -84,16 +89,18 @@ pub async fn login(
     data_response!(LoginResponse { token: session_id })
 }
 
+/// Remove the session from the database.
 pub async fn logout(
     State(state): State<FelaState>,
     Session(session): Session,
 ) -> ApiResult<SuccessResponse> {
-    // Remove the session from the database.
     state.database.delete_session(&session.session_id).await?;
 
     api_response!("server-authentication--logged-out")
 }
 
+/// Return session info to client.
+/// Used to check if session is still alive.
 pub async fn info(Session(session): Session) -> ApiResult<DataResponse<SessionInfo>> {
     data_response!(session)
 }

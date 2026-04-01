@@ -88,7 +88,7 @@ pub async fn get_session(
     next.run(request).await
 }
 
-// Extract the session from the request.
+/// Extract the session from the request.
 pub struct Session(pub SessionInfo);
 
 impl FromRequestParts<FelaState> for Session {
@@ -120,7 +120,7 @@ impl OptionalFromRequestParts<FelaState> for Session {
     }
 }
 
-// Extract the session from the request if user is an admin.
+/// Extract the session from the request if user is an admin.
 pub struct AdminSession(pub SessionInfo);
 
 impl FromRequestParts<FelaState> for AdminSession {
@@ -147,7 +147,7 @@ impl FromRequestParts<FelaState> for AdminSession {
     }
 }
 
-// Create session id.
+/// Create session id.
 pub fn create_session_id() -> String {
     random_string(SESSION_ID_ENTROPY)
 }

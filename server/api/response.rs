@@ -42,15 +42,15 @@ pub enum ApiError {
     #[error("server-fs--invalid-path")]
     InvalidPath,
 
+    #[error("server-fs--path-does-not-exist")]
+    PathDoesNotExist(String),
+
     #[error("server-fs--not-found")]
     FileNotFound,
 
     // Book errors.
     #[error("server-upload--missing-data")]
     UploadMissingData,
-
-    #[error("server-upload--invalid-file-path")]
-    UploadInvalidFilePath(String),
 
     #[error("server-books--failed-to-get-cover-image")]
     FailedToGetCoverImage,
@@ -85,7 +85,7 @@ impl IntoResponse for ApiError {
             | Self::InvalidCredentials
             | Self::AlreadyLoggedIn
             | Self::UploadMissingData
-            | Self::UploadInvalidFilePath(_)
+            | Self::PathDoesNotExist(_)
             | Self::InvalidPath => StatusCode::BAD_REQUEST,
             Self::CouldNotListDirectory | Self::FailedToGetCoverImage | Self::FFProbeFailed(_) => {
                 StatusCode::UNPROCESSABLE_ENTITY
@@ -109,7 +109,7 @@ impl IntoResponse for ApiError {
             | Self::FileNotFound
             | Self::NotFound => ErrorResponse::new(api_error.to_string(), None),
 
-            Self::UploadInvalidFilePath(value) | Self::FFProbeFailed(value) => {
+            Self::PathDoesNotExist(value) | Self::FFProbeFailed(value) => {
                 ErrorResponse::new(api_error.to_string(), Some(value.to_string()))
             }
 
@@ -181,7 +181,7 @@ impl ErrorResponse {
     }
 }
 
-// Macro for creating a success response.
+// Creates a success response.
 #[macro_export]
 macro_rules! api_response {
     ($message:expr) => {
@@ -197,7 +197,7 @@ macro_rules! api_response {
     };
 }
 
-// Macro for creating a success response with data.
+/// Creates a success response with data.
 #[macro_export]
 macro_rules! data_response {
     ($data:expr) => {
@@ -205,33 +205,7 @@ macro_rules! data_response {
     };
 }
 
-// Macros for creating ApiErrors.
-#[macro_export]
-macro_rules! api_error {
-    ($err:ident) => {
-        $crate::api::response::ApiError::$err
-    };
-    ($err:ident, $arg:expr) => {
-        $crate::api::response::ApiError::$err(format!("{}", $arg))
-    };
-    ($err:ident, $($arg:tt)*) => {
-        $crate::api::response::ApiError::$err(format!($($arg)*))
-    };
-}
-
-#[macro_export]
-macro_rules! api_error_result {
-    ($err:ident) => {
-        Err($crate::api::response::ApiError::$err)
-    };
-    ($err:ident, $arg:expr) => {
-        Err($crate::api::response::ApiError::$err(format!("{}", $arg)))
-    };
-    ($err:ident, $($arg:tt)*) => {
-        Err($crate::api::response::ApiError::$err(format!($($arg)*)))
-    };
-}
-
+/// Creates an ApiError and returns from the function.
 #[macro_export]
 macro_rules! api_bail {
     ($err:ident) => {

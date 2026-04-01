@@ -30,6 +30,14 @@ use std::sync::LazyLock;
 
 use serde::{Deserialize, Serialize};
 
+/// Placeholder image used when a book has no cover attached.
+static PLACEHOLDER_COVER: LazyLock<Vec<u8>> = LazyLock::new(|| {
+    let placeholder_cover = include_bytes!("../../placeholder-cover.jpg");
+    placeholder_cover.to_vec()
+});
+
+/// Build router for books and library.
+/// Is attached to `/book`.
 pub fn router() -> Router<FelaState> {
     Router::new()
         .route("/", get(get_books).post(upload_book))
@@ -39,6 +47,7 @@ pub fn router() -> Router<FelaState> {
         .route("/{book_id}/progress", put(update_progress))
 }
 
+/// Returns all books.
 pub async fn get_books(
     State(state): State<FelaState>,
     Session(_): Session,
@@ -48,6 +57,7 @@ pub async fn get_books(
     data_response!(books)
 }
 
+/// Response for a single book, includes chapters and user library state.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BookResponse {
@@ -60,6 +70,7 @@ pub struct BookResponse {
     chapters: Vec<Chapter>,
 }
 
+/// Get info for a single book by id.
 pub async fn get_book_details(
     Session(session): Session,
     Path(book_id): Path<i64>,
@@ -92,11 +103,7 @@ pub async fn get_book_details(
     })
 }
 
-static PLACEHOLDER_COVER: LazyLock<Vec<u8>> = LazyLock::new(|| {
-    let placeholder_cover = include_bytes!("../../placeholder-cover.jpg");
-    placeholder_cover.to_vec()
-});
-
+/// Get cover for book.
 pub async fn get_book_cover(
     Session(_): Session,
     Path(book_id): Path<i64>,
@@ -115,6 +122,7 @@ pub async fn get_book_cover(
     }
 }
 
+/// Data needed for a book upload.
 #[derive(TryFromMultipart)]
 pub struct UploadBook {
     title: String,
@@ -125,10 +133,14 @@ pub struct UploadBook {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+/// Response for a successful book upload.
 pub struct UploadBookResponse {
     book_id: i64,
 }
 
+/// "Upload" a new book.
+/// No actual audio data is send, the server reads from the servers disk.
+/// This is more a "registering". An admin sets the author, title, and cover for a book.
 pub async fn upload_book(
     State(state): State<FelaState>,
     AdminSession(_): AdminSession,
@@ -150,13 +162,10 @@ pub async fn upload_book(
 
     // Validate each file path exists and stays within allowed bounds.
     let allowed_root = &*FELA_MEDIA_ROOT;
-    for file in &files {
-        let file_path = std::path::Path::new(file);
-        if !file_path.exists() {
-            api_bail!(UploadInvalidFilePath, file.to_string())
-        }
-        validate_path_within_bounds(file_path, allowed_root)?;
-    }
+    let files = files
+        .iter()
+        .map(|file| validate_path_within_bounds(std::path::Path::new(file), allowed_root))
+        .collect::<Result<Vec<_>, _>>()?;
 
     // Extract cover image.
     let cover = if let Some(cover) = cover {
@@ -187,18 +196,18 @@ pub async fn upload_book(
         // Use ffprobe to get duration of file.
         let duration = ffprobe_duration(&path)
             .await
-            .with_context(|| ApiError::FFProbeFailed(path.to_string()))?;
+            .with_context(|| ApiError::FFProbeFailed(path.to_string_lossy().into_owned()))?;
 
         // Get file name from file path.
         // Remove file extension and replace underscores with spaces.
-        let name = std::path::Path::new(&path)
+        let name = path
             .file_stem()
             .and_then(|s| s.to_str())
             .map(|s| s.replace('_', " "))
-            .unwrap_or_else(|| path.clone());
+            .unwrap_or_else(|| path.to_string_lossy().into_owned());
 
         file_data.push(FileData {
-            path,
+            path: path.to_string_lossy().into_owned(),
             name,
             duration,
         });
@@ -216,7 +225,7 @@ pub async fn upload_book(
     data_response!(UploadBookResponse { book_id })
 }
 
-// Define the library lists.
+/// Define the library lists.
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum LibraryLists {
@@ -238,6 +247,7 @@ impl Display for LibraryLists {
     }
 }
 
+/// Data required for a user to move a book into their library.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SetBookList {
@@ -246,7 +256,7 @@ pub struct SetBookList {
     progress: Option<f64>,
 }
 
-/// Move book into a library list.
+/// Move book into library.
 pub async fn set_book_list(
     Session(session): Session,
     Path(book_id): Path<i64>,
@@ -266,7 +276,7 @@ pub async fn set_book_list(
     api_response!("library--list-set")
 }
 
-// Update progress.
+/// Required data to update progress data.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateProgress {
@@ -274,6 +284,7 @@ pub struct UpdateProgress {
     progress: f64,
 }
 
+/// Update progress data.
 pub async fn update_progress(
     Session(session): Session,
     Path(book_id): Path<i64>,

@@ -7,7 +7,13 @@ use crate::api::response::ApiError;
 /// Fails if either path doesn't exist or if the path escapes the allowed directory.
 pub fn validate_path_within_bounds(path: &Path, allowed_root: &Path) -> Result<PathBuf, ApiError> {
     let canonical_root = std::fs::canonicalize(allowed_root).map_err(|_| ApiError::InvalidPath)?;
-    let canonical = std::fs::canonicalize(path).map_err(|_| ApiError::InvalidPath)?;
+    let canonical = std::fs::canonicalize(path).map_err(|e| {
+        if e.kind() == std::io::ErrorKind::NotFound {
+            ApiError::PathDoesNotExist(path.to_string_lossy().into_owned())
+        } else {
+            ApiError::InvalidPath
+        }
+    })?;
 
     if !canonical.starts_with(&canonical_root) {
         return Err(ApiError::InvalidPath);
