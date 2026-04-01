@@ -1,11 +1,11 @@
-# Freya - Audiobook server
+# Fela - Audiobook server
 
-![Book details view of in the Freya web frontend](./freya.webp)
+![Book details view of in the Fela web frontend](./fela.webp)
 
 A server to easily host and listen to audiobooks.
 
 There is a good chance you would be more happy with [Audiobookshelf](https://github.com/advplyr/audiobookshelf).
-Freya is limited in scope and relies heavily on the browser to provide the necessary
+Fela is limited in scope and relies heavily on the browser to provide the necessary
 codecs and features to play audio. Audiobookshelf is a more complete solution and much more
 likely what you are looking for.
 
@@ -39,7 +39,7 @@ To manually build the project:
 
     This should install all the required dependencies and build both the frontend and backend.
 
-The built binary will be located at `./target/release/freya`. It contains both the server and
+The built binary will be located at `./target/release/Fela`. It contains both the server and
 frontend.
 
 ## Run
@@ -48,7 +48,7 @@ frontend.
     - [FFmpeg](https://ffmpeg.org/download.html) (tested with `n6.1.1`)
 
 2. Set the following environment variables:
-    - `DATABASE_PATH`: The path to the database, e.g. `sqlite://db`. (default: `./freya.db`)
+    - `DATABASE_PATH`: The path to the database, e.g. `sqlite://db`. (default: `./fela.db`)
     - `NO_MIGRATE`: Set to not run migrations on startup. (default: `false`)
     - `PORT`: The port to run the server on. (default: `3000`)
     - `SESSION_LIFETIME`: The lifetime of a session in hours. (default: `720` which equates to 30 days)
@@ -60,9 +60,9 @@ environment variables manually.
 3. Then simply run the binary you built. The frontend is bundled into the binary and will be served
    unless the client hits an API endpoint.
 
-Note: By default the migrations run will create an `admin` user with the password `admin`. If you expose Freya
+Note: By default the migrations run will create an `admin` user with the password `admin`. If you expose fela
 to the internet, you will want to change the password.
 
 ## License
 
-Freya is licensed under the [ISC License](./LICENSE).
+Fela is licensed under the [ISC License](./LICENSE).

@@ -11,12 +11,12 @@ use crate::{
         file::{File, FileData},
         library::LibraryEntry,
     },
-    fs::{path::validate_path_within_bounds, storage::FREYA_MEDIA_ROOT},
+    fs::{path::validate_path_within_bounds, storage::FELA_MEDIA_ROOT},
     media::{
         cover::get_cover_bytes,
         ffmpeg::{ffprobe_chapters, ffprobe_duration},
     },
-    state::FreyaState,
+    state::FelaState,
 };
 use anyhow::Context;
 use axum::{
@@ -30,7 +30,7 @@ use std::sync::LazyLock;
 
 use serde::{Deserialize, Serialize};
 
-pub fn router() -> Router<FreyaState> {
+pub fn router() -> Router<FelaState> {
     Router::new()
         .route("/", get(get_books).post(upload_book))
         .route("/{book_id}", get(get_book_details))
@@ -40,7 +40,7 @@ pub fn router() -> Router<FreyaState> {
 }
 
 pub async fn get_books(
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
     Session(_): Session,
 ) -> ApiResult<DataResponse<Vec<Book>>> {
     let books = state.database.get_all_books().await?;
@@ -63,7 +63,7 @@ pub struct BookResponse {
 pub async fn get_book_details(
     Session(session): Session,
     Path(book_id): Path<i64>,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
 ) -> ApiResult<DataResponse<BookResponse>> {
     // Get book from the database.
     let book = state
@@ -100,7 +100,7 @@ static PLACEHOLDER_COVER: LazyLock<Vec<u8>> = LazyLock::new(|| {
 pub async fn get_book_cover(
     Session(_): Session,
     Path(book_id): Path<i64>,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
 ) -> ApiFileResult<Vec<u8>> {
     // Get cover image from the database.
     let result = state.database.get_book_cover(book_id).await;
@@ -130,7 +130,7 @@ pub struct UploadBookResponse {
 }
 
 pub async fn upload_book(
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
     AdminSession(_): AdminSession,
     TypedMultipart(UploadBook {
         title,
@@ -149,7 +149,7 @@ pub async fn upload_book(
     }
 
     // Validate each file path exists and stays within allowed bounds.
-    let allowed_root = &*FREYA_MEDIA_ROOT;
+    let allowed_root = &*FELA_MEDIA_ROOT;
     for file in &files {
         let file_path = std::path::Path::new(file);
         if !file_path.exists() {
@@ -250,7 +250,7 @@ pub struct SetBookList {
 pub async fn set_book_list(
     Session(session): Session,
     Path(book_id): Path<i64>,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
     Json(SetBookList {
         list,
         file_id,
@@ -277,7 +277,7 @@ pub struct UpdateProgress {
 pub async fn update_progress(
     Session(session): Session,
     Path(book_id): Path<i64>,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
     Json(UpdateProgress { file_id, progress }): Json<UpdateProgress>,
 ) -> ApiResult<SuccessResponse> {
     state

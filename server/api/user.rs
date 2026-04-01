@@ -4,21 +4,18 @@ use axum::{
     routing::get,
 };
 
-use crate::{
-    data_response,
-    auth::session::Session,
-    database::library::LibraryResponse,
-    state::FreyaState,
-};
 use super::response::{ApiResult, DataResponse};
+use crate::{
+    auth::session::Session, data_response, database::library::LibraryResponse, state::FelaState,
+};
 
-pub fn router() -> Router<FreyaState> {
+pub fn router() -> Router<FelaState> {
     Router::new().route("/{id}/library", get(get_library))
 }
 
 pub async fn get_library(
     Session(_): Session,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
     Path(id): Path<i64>,
 ) -> ApiResult<DataResponse<Vec<LibraryResponse>>> {
     // Get library by user id.

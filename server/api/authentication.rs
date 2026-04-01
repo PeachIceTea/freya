@@ -4,39 +4,44 @@ use axum::{
     extract::State,
     routing::{delete, get, post},
 };
-use tower_cookies::Cookies;
+use serde::{Deserialize, Serialize};
 
+use super::response::{ApiError, ApiResult, DataResponse, SuccessResponse};
 use crate::{
-    api_bail, api_response, data_response,
+    api_bail, api_response,
     auth::{
         password::verify_password,
-        session::{Session, create_session_cookie, create_session_id, delete_session_cookie},
+        session::{Session, create_session_id},
     },
+    data_response,
     database::session::SessionInfo,
-    state::FreyaState,
+    state::FelaState,
 };
-use super::response::{ApiError, ApiResult, DataResponse, SuccessResponse};
 
-pub fn build_router() -> Router<FreyaState> {
+pub fn build_router() -> Router<FelaState> {
     Router::new()
         .route("/login", post(login))
         .route("/logout", delete(logout))
         .route("/info", get(info))
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Deserialize)]
 pub struct LoginRequest {
     username: String,
     password: String,
 }
 
+#[derive(Serialize)]
+pub struct LoginResponse {
+    token: String,
+}
+
 #[debug_handler]
 pub async fn login(
-    cookies: Cookies,
     session: Option<Session>,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
     Json(data): Json<LoginRequest>,
-) -> ApiResult<SuccessResponse> {
+) -> ApiResult<DataResponse<LoginResponse>> {
     // Check if the user is already logged in.
     if session.is_some() {
         api_bail!(AlreadyLoggedIn)
@@ -76,25 +81,15 @@ pub async fn login(
         .await
         .context("Failed to create session in database")?;
 
-    // Set the session cookie.
-    cookies.add(create_session_cookie(
-        &session_id,
-        time::OffsetDateTime::now_utc(),
-    ));
-
-    api_response!("server-authentication--logged-in")
+    data_response!(LoginResponse { token: session_id })
 }
 
 pub async fn logout(
-    cookies: Cookies,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
     Session(session): Session,
 ) -> ApiResult<SuccessResponse> {
     // Remove the session from the database.
     state.database.delete_session(&session.session_id).await?;
-
-    // Delete the session cookie.
-    cookies.remove(delete_session_cookie());
 
     api_response!("server-authentication--logged-out")
 }

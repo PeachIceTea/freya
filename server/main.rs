@@ -24,7 +24,7 @@ async fn main() {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                "freya,migrate,tower_http=debug,axum::rejection=trace"
+                "fela,migrate,tower_http=debug,axum::rejection=trace"
                     .parse()
                     .unwrap()
             }),
@@ -36,7 +36,7 @@ async fn main() {
     media::ffmpeg::is_ffmpeg_installed().expect("Should be able to access ffmpeg and ffprobe");
 
     // Build application.
-    let state: state::FreyaState = state::FreyaState::new().await;
+    let state: state::FelaState = state::FelaState::new().await;
 
     // Include the frontend in the release profile.
     #[cfg(profile = "release")]

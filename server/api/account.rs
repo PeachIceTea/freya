@@ -5,15 +5,19 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{
-    api_bail, api_response, data_response,
-    auth::{password::hash_password, session::{AdminSession, Session}},
-    database::user::User,
-    state::FreyaState,
-};
 use super::response::{ApiResult, DataResponse, SuccessResponse};
+use crate::{
+    api_bail, api_response,
+    auth::{
+        password::hash_password,
+        session::{AdminSession, Session},
+    },
+    data_response,
+    database::user::User,
+    state::FelaState,
+};
 
-pub fn router() -> Router<FreyaState> {
+pub fn router() -> Router<FelaState> {
     Router::new()
         .route("/", get(get_users).post(create_user))
         .route("/{id}", get(get_user).patch(update_user))
@@ -21,7 +25,7 @@ pub fn router() -> Router<FreyaState> {
 
 pub async fn get_users(
     Session(_): Session,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
 ) -> ApiResult<DataResponse<Vec<User>>> {
     // Get all users.
     let users = state.database.get_all_users().await?;
@@ -31,7 +35,7 @@ pub async fn get_users(
 
 pub async fn get_user(
     Session(_): Session,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
     Path(id): Path<i64>,
 ) -> ApiResult<DataResponse<User>> {
     // Get user by id.
@@ -48,7 +52,7 @@ pub struct CreateUserRequest {
 }
 pub async fn create_user(
     AdminSession(_): AdminSession,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
     Json(body): Json<CreateUserRequest>,
 ) -> ApiResult<SuccessResponse> {
     // Noramlize username.
@@ -79,7 +83,7 @@ pub struct UpdateUserRequest {
 
 pub async fn update_user(
     Session(session): Session,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
     Path(id): Path<i64>,
     Json(body): Json<UpdateUserRequest>,
 ) -> ApiResult<SuccessResponse> {

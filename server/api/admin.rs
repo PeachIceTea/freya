@@ -1,21 +1,18 @@
 use anyhow::Context;
 use axum::{Router, extract::State, routing::post};
 
-use crate::{
-    api_response,
-    auth::session::AdminSession,
-    media::ffmpeg::ffprobe_chapters,
-    state::FreyaState,
-};
 use super::response::{ApiResult, SuccessResponse};
+use crate::{
+    api_response, auth::session::AdminSession, media::ffmpeg::ffprobe_chapters, state::FelaState,
+};
 
-pub fn router() -> Router<FreyaState> {
+pub fn router() -> Router<FelaState> {
     Router::new().route("/rediscover-chapters", post(rediscover_chapters))
 }
 
 pub async fn rediscover_chapters(
     AdminSession(_): AdminSession,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
 ) -> ApiResult<SuccessResponse> {
     // Get all books with only one file.
     let entries = sqlx::query!(

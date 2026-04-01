@@ -25,7 +25,7 @@ async fn main() {
 // sqlx uses the database file to infer types and check queries at compile time.
 // To make it easier we create a database for sqlx to run against at build startup.
 async fn migrate_database() {
-    let database_path = std::env::var("DATABASE_PATH").unwrap_or_else(|_| "freya.db".to_string());
+    let database_path = std::env::var("DATABASE_PATH").unwrap_or_else(|_| "fela.db".to_string());
 
     // Check if database file exists.
     if !std::path::Path::new(&database_path).exists() {
@@ -49,13 +49,6 @@ async fn build_frontend(profile: &str) {
     if profile != "release" {
         return;
     }
-
-    // Install npm dependencies.
-    Command::new("npm")
-        .arg("install")
-        .status()
-        .await
-        .expect("Should be able to run npm install");
 
     // Build the frontend.
     let status = Command::new("npm")

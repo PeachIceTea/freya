@@ -3,7 +3,7 @@ use axum::body::Bytes;
 use axum_typed_multipart::FieldData;
 
 use crate::fs::path::{FileSchemes, resolve_scheme_path, validate_path_within_bounds};
-use crate::fs::storage::{FREYA_MEDIA_ROOT, TMP_PATH};
+use crate::fs::storage::{FELA_MEDIA_ROOT, TMP_PATH};
 
 pub static RANDOM_FILE_NAME_LENGTH: usize = 12;
 
@@ -39,9 +39,7 @@ fn read_image(path: &str) -> Result<Vec<u8>> {
     // Resolve the scheme-prefixed path, then validate it stays within its allowed root.
     let (scheme, resolved_path) = resolve_scheme_path(path)?;
     let validated_path = match scheme {
-        FileSchemes::File => {
-            validate_path_within_bounds(&resolved_path, &FREYA_MEDIA_ROOT)?
-        }
+        FileSchemes::File => validate_path_within_bounds(&resolved_path, &FELA_MEDIA_ROOT)?,
         FileSchemes::ExtractedFile => validate_path_within_bounds(&resolved_path, &TMP_PATH)?,
     };
 

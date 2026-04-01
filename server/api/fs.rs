@@ -8,21 +8,22 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
+use super::response::{ApiError, ApiFileResult, ApiResult, DataResponse};
 use crate::{
-    api_bail, data_response,
+    api_bail,
     auth::session::{AdminSession, Session},
+    data_response,
     fs::{
         list_fs::{Entry, IMAGE_EXTENSIONS, get_file_system_list},
         path::validate_path_within_bounds,
         send_file::send_file,
-        storage::{FREYA_MEDIA_ROOT, TMP_PATH},
+        storage::{FELA_MEDIA_ROOT, TMP_PATH},
     },
     media::ffmpeg::{FileInfo, ffprobe_book_details},
-    state::FreyaState,
+    state::FelaState,
 };
-use super::response::{ApiError, ApiFileResult, ApiResult, DataResponse};
 
-pub fn router() -> Router<FreyaState> {
+pub fn router() -> Router<FelaState> {
     Router::new()
         .route("/", get(fs))
         .route("/info", get(ffprobe))
@@ -50,17 +51,16 @@ pub async fn fs(
     Query(FsQuery { path }): Query<FsQuery>,
 ) -> ApiResult<DataResponse<FsResponse>> {
     let path = path.map_or_else(
-        || FREYA_MEDIA_ROOT.to_string_lossy().into_owned(),
+        || FELA_MEDIA_ROOT.to_string_lossy().into_owned(),
         |p| match p.trim() {
-            "" => FREYA_MEDIA_ROOT.to_string_lossy().into_owned(),
+            "" => FELA_MEDIA_ROOT.to_string_lossy().into_owned(),
             p => p.to_string(),
         },
     );
 
-    // Validate path stays within allowed bounds; fall back to FREYA_MEDIA_ROOT if invalid.
-    let validated_path =
-        validate_path_within_bounds(std::path::Path::new(&path), &FREYA_MEDIA_ROOT)
-            .unwrap_or_else(|_| FREYA_MEDIA_ROOT.clone());
+    // Validate path stays within allowed bounds; fall back to FELA_MEDIA_ROOT if invalid.
+    let validated_path = validate_path_within_bounds(std::path::Path::new(&path), &FELA_MEDIA_ROOT)
+        .unwrap_or_else(|_| FELA_MEDIA_ROOT.clone());
 
     let list = get_file_system_list(&validated_path)
         .await
@@ -94,7 +94,7 @@ pub async fn ffprobe(
 
     // Validate the path stays within allowed bounds. Path must be exact for ffprobe.
     let validated_path =
-        validate_path_within_bounds(std::path::Path::new(&path), &*FREYA_MEDIA_ROOT)?;
+        validate_path_within_bounds(std::path::Path::new(&path), &*FELA_MEDIA_ROOT)?;
     let validated_path_str = validated_path.to_string_lossy().to_string();
 
     let info = ffprobe_book_details(&validated_path_str)
@@ -149,7 +149,7 @@ pub async fn get_audio_file(
     Session(_): Session,
     Path(file_id): Path<String>,
     headers: HeaderMap,
-    State(state): State<FreyaState>,
+    State(state): State<FelaState>,
 ) -> ApiFileResult<impl IntoResponse> {
     // Get file path from database.
     let file = state

@@ -6,13 +6,14 @@ use crate::auth::random::random_string;
 /// The root directory for all user-accessible media files.
 /// Controlled by the `DEFAULT_DIRECTORY` environment variable (default: `/`).
 /// All file access from the API is bounded to this directory.
-pub static FREYA_MEDIA_ROOT: LazyLock<PathBuf> =
-    LazyLock::new(|| std::env::var("DEFAULT_DIRECTORY").map_or_else(|_| PathBuf::from("/"), PathBuf::from));
+pub static FELA_MEDIA_ROOT: LazyLock<PathBuf> = LazyLock::new(|| {
+    std::env::var("DEFAULT_DIRECTORY").map_or_else(|_| PathBuf::from("/"), PathBuf::from)
+});
 
 pub static TMP_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
     // Create temporary directory.
     let random = random_string(12);
-    let path = std::env::temp_dir().join(format!("freya-{random}"));
+    let path = std::env::temp_dir().join(format!("fela-{random}"));
     std::fs::create_dir(&path).expect("Should be able to create temporary directory");
     path
 });
@@ -31,16 +32,16 @@ mod tests {
 
     #[test]
     fn test_tmp_path_name() {
-        // Check if the temporary directory name starts with "freya-"
+        // Check if the temporary directory name starts with "fela-"
         let dir_name = TMP_PATH.file_name().unwrap().to_str().unwrap();
-        assert!(dir_name.starts_with("freya-"));
+        assert!(dir_name.starts_with("fela-"));
     }
 
     #[test]
     fn test_tmp_path_uniqueness() {
         // Create another temporary directory and ensure it's different from TMP_PATH
         let random = random_string(12);
-        let path = std::env::temp_dir().join(format!("freya-{random}"));
+        let path = std::env::temp_dir().join(format!("fela-{random}"));
 
         std::fs::create_dir(&path).expect("Should be able to create temporary directory");
         assert_ne!(path, *TMP_PATH);

@@ -8,12 +8,11 @@ mod user;
 
 use axum::{Json, Router, http::StatusCode, middleware, response::IntoResponse, routing::get};
 use serde::Serialize;
-use tower_cookies::CookieManagerLayer;
 use tower_http::trace::TraceLayer;
 
-use crate::{auth::session::get_session, state::FreyaState};
+use crate::{auth::session::get_session, state::FelaState};
 
-pub async fn build_router(state: FreyaState) -> Router {
+pub async fn build_router(state: FelaState) -> Router {
     Router::new()
         .fallback(route_not_found)
         .route("/", get(greet))
@@ -24,7 +23,6 @@ pub async fn build_router(state: FreyaState) -> Router {
         .nest("/account", account::router())
         .nest("/admin", admin::router())
         .route_layer(middleware::from_fn_with_state(state.clone(), get_session))
-        .route_layer(CookieManagerLayer::new())
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }
@@ -38,7 +36,7 @@ struct Greeting {
 
 static GREETING: Json<Greeting> = Json(Greeting {
     success: true,
-    message: "Welcome to Freya!",
+    message: "Welcome to Fela!",
 });
 pub async fn greet() -> impl IntoResponse {
     GREETING
